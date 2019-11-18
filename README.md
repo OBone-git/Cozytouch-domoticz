@@ -24,5 +24,5 @@ PodMiniComponent = bridge Cozytouch
 ---------------------------------------------------------------------------------------
 
 Script : 
-- At first execution it create a virtual material "dummy" nammed "cozytouch_vx", and dreate the virtual devices (logged in domoticz events)
+- At first execution it create a virtual material "dummy" nammed "cozytouch_vx", and create the virtual devices (logged in domoticz events)
 - Then the script reads or writes the datas between the server cozytouch and domoticz.
