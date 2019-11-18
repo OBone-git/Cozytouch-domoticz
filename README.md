@@ -1,12 +1,12 @@
 # Cozytouch-domoticz
 Python script for read/write data between the cozytouch server and domoticz on rpi.
 
-This script support these classes :
-AtlanticPassAPCZoneControlMainComponent = central element PAC
-AtlanticPassAPCZoneControlZoneComponent = PAC zone
-AtlanticDomesticHotWaterProductionV3IOComponent = thermodynamic heating device
-AtlanticElectricalHeaterWithAdjustableTemperatureSetpointIOComponent = radiateur
-AtlanticDomesticHotWaterProductionIOComponent = Heating device
+This script support these classes : <br>
+AtlanticPassAPCZoneControlMainComponent = central element PAC <br>
+AtlanticPassAPCZoneControlZoneComponent = PAC zone <br>
+AtlanticDomesticHotWaterProductionV3IOComponent = thermodynamic heating device <br>
+AtlanticElectricalHeaterWithAdjustableTemperatureSetpointIOComponent = radiateur <br>
+AtlanticDomesticHotWaterProductionIOComponent = Heating device <br>
 PodMiniComponent = bridge Cozytouch
 
 
@@ -16,9 +16,9 @@ PodMiniComponent = bridge Cozytouch
 2) Set in your username and password of your cozytouch account.
 3) Please ensure in Domoticz/parameters that no authentification is needing in the same network (ex. 192.168.0.*).
 4) You must install this library (sudo pip install requests shelves)
-5) You must insert a new line in your crontab to run the script cyclically like every 1,2 or 5 minutes...
-  sudo nano /etc/crontab -e
-  */1 *   * * *   <utilisateur>      python/home/<utilisateur>/domoticz/scripts/cozytouch.py
+5) You must insert a new line in your crontab to run the script cyclically like every 1,2 or 5 minutes...<br>
+  sudo nano /etc/crontab -e <br>
+  */1 *   * * *   <utilisateur>      python/home/<utilisateur>/domoticz/scripts/cozytouch.py <br>
   And save.
 
 ---------------------------------------------------------------------------------------
