@@ -444,10 +444,15 @@ def test_exist_cozytouch_domoticz_hw_and_backup_store():
         print("Fichier de sauvegarde de la configuration : "+str(cozytouch_save))
 
     # Teste si le hardware cozytouch a déjà été créé dans domoticz ; sinon on le crée
-
-    # Cas où le fichier de sauvegarde contenant l'idx du hardware cozytouch est inexistant:
-    if os.path.isfile(cozytouch_save)==False : #and os.path.isfile(cozytouch_save+".dat")==False:
+    # Essaie de charger le fichier de sauvegarde
+    try:
+        shelve.open(cozytouch_save,'w') # Ouvrir la sauvegarde existante
+    except:
+        # Cas où le fichier de sauvegarde contenant l'idx du hardware cozytouch est inexistant:
         print("Fichier de sauvegarde de la configuration inexistant, creation hardware cozytouch dans domoticz et nouveau fichier de sauvegarde")
+        d=shelve.open(cozytouch_save,'c')
+        d.close()
+
         idx = domoticz_add_virtual_harware() # création d'un hardware de type virtual dans domoticz
         if idx == 0:
             print("!!!! Echec creation hardware cozytouch dans domoticz")
