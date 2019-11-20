@@ -6,7 +6,7 @@
 # review: Yannig Nov 2018
 # modification : sg2 Fev 2019
 
-# modification (V4): OBone 09/2019 :
+# modification (V36): OBone 09/2019 :
 '''
 Ajout des classes :
 AtlanticPassAPCZoneControlMainComponent = PAC élément central zone Control
