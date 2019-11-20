@@ -556,7 +556,7 @@ def read_label_from_cozytouch(data,x,oid='none'):
                     y+=1
                     continue
             except:
-                label=str(device)
+                label=u'noname'
                 break
     return label
                     
@@ -613,7 +613,7 @@ def decouverte_devices():
                p+=1 # incrément position dans dictionnaire des devices
                
             elif name == dict_cozytouch_devtypes.get(u'chauffe eau'):
-                liste = ajout_chauffe_eau (save_idx,liste,url,x,read_label_from_cozytouch(data,x,oid)) 
+                liste = ajout_chauffe_eau (save_idx,liste,url,x,(data[u'setup'][u'rootPlace'][u'label'])) # label rootplace
                 p+=1
 
             elif name == dict_cozytouch_devtypes.get(u'module fil pilote'):
@@ -629,7 +629,7 @@ def decouverte_devices():
                 p+=1
 
             elif name == dict_cozytouch_devtypes.get(u'chauffe eau thermodynamique V3'):
-                liste= ajout_chauffe_eau_thermodynamique_V3 (save_idx,liste,url,x,(data[u'setup'][u'rootPlace'][u'subPlaces'][0][u'label'])) # label
+                liste= ajout_chauffe_eau_thermodynamique_V3 (save_idx,liste,url,x,(data[u'setup'][u'rootPlace'][u'subPlaces'][0][u'label'])) # label subplaces
                 p+=1
 
             elif name == dict_cozytouch_devtypes.get(u'bridge cozytouch'):
