@@ -4,7 +4,12 @@ Python script for read/write data between the cozytouch server and domoticz on r
 This script support these classes : <br>
 AtlanticPassAPCZoneControlMainComponent = central element PAC <br>
 AtlanticPassAPCZoneControlZoneComponent = PAC zone <br>
-AtlanticDomesticHotWaterProductionV3IOComponent = thermodynamic heating device <br>
+
+AtlanticDomesticHotWaterProductionV3IOComponent = thermodynamic heating device :
+<ul> - Thermor AéroMax 4 
+</ul>
+<br>
+
 AtlanticElectricalHeaterWithAdjustableTemperatureSetpointIOComponent = radiateur <br>
 AtlanticDomesticHotWaterProductionIOComponent = Heating device <br>
 PodMiniComponent = bridge Cozytouch
