@@ -90,12 +90,13 @@ Dictionnaire devices principaux cozytouch
 '''
 dict_cozytouch_devtypes = {}
 dict_cozytouch_devtypes['radiateur']='io:AtlanticElectricalHeaterWithAdjustableTemperatureSetpointIOComponent'
-dict_cozytouch_devtypes['chauffe eau']='io:AtlanticDomesticHotWaterProductionIOComponent'
+dict_cozytouch_devtypes['chauffe eau']='io:AtlanticDomesticHotWaterProductionxxxxx' #classe désactivée
 dict_cozytouch_devtypes['module fil pilote']='io:AtlanticElectricalHeaterIOComponent'
 dict_cozytouch_devtypes['bridge cozytouch']='internal:PodMiniComponent'
 dict_cozytouch_devtypes['PAC main control']='io:AtlanticPassAPCZoneControlMainComponent'
 dict_cozytouch_devtypes['PAC zone control']='io:AtlanticPassAPCZoneControlZoneComponent'
 dict_cozytouch_devtypes['chauffe eau thermodynamique V3']="io:AtlanticDomesticHotWaterProductionV3IOComponent"
+dict_cozytouch_devtypes['chauffe eau thermodynamique']="io:AtlanticDomesticHotWaterProductionIOComponent"
 
 '''
 **********************************************************
@@ -628,8 +629,8 @@ def decouverte_devices():
                 liste= ajout_PAC_zone_control (save_idx,liste,url,x,read_label_from_cozytouch(data,x)) 
                 p+=1
 
-            elif name == dict_cozytouch_devtypes.get(u'chauffe eau thermodynamique V3'):
-                liste= ajout_chauffe_eau_thermodynamique_V3 (save_idx,liste,url,x,(data[u'setup'][u'rootPlace'][u'subPlaces'][0][u'label'])) # label subplaces
+            elif name == dict_cozytouch_devtypes.get(u'chauffe eau thermodynamique V3') or name == dict_cozytouch_devtypes.get(u'chauffe eau thermodynamique'):
+                liste= ajout_chauffe_eau_thermodynamique_V3 (save_idx,liste,url,x,(data[u'setup'][u'rootPlace'][u'label'])) # label sur rootplace
                 p+=1
 
             elif name == dict_cozytouch_devtypes.get(u'bridge cozytouch'):
@@ -1431,9 +1432,9 @@ def maj_device(data,name,p,x):
 
 
     '''
-    Mise à jour : Données chauffe eau thermodynamique V3
+    Mise à jour : Données chauffe eau thermodynamique
     '''
-    if name == dict_cozytouch_devtypes.get(u'chauffe eau thermodynamique V3'):
+    if name == dict_cozytouch_devtypes.get(u'chauffe eau thermodynamique V3') or name == dict_cozytouch_devtypes.get(u'chauffe eau thermodynamique')  :
         
         # Etat chauffe on/off
         a = (value_by_name(data,x,u"io:OperatingModeCapabilitiesState"))[u'energyDemandStatus']
