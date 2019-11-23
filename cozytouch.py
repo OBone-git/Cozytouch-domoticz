@@ -629,7 +629,7 @@ def decouverte_devices():
                 liste= ajout_PAC_zone_control (save_idx,liste,url,x,read_label_from_cozytouch(data,x)) 
                 p+=1
 
-            elif name == dict_cozytouch_devtypes.get(u'chauffe eau thermodynamique V3') or name == dict_cozytouch_devtypes.get(u'chauffe eau thermodynamique')
+            elif name == dict_cozytouch_devtypes.get(u'chauffe eau thermodynamique V3') or name == dict_cozytouch_devtypes.get(u'chauffe eau thermodynamique'):
                 liste= ajout_chauffe_eau_thermodynamique_V3 (save_idx,liste,url,x,(data[u'setup'][u'rootPlace'][u'label'])) # label sur rootplace
                 p+=1
 
