@@ -1108,7 +1108,6 @@ def gestion_switch_selector_domoticz (cozytouch_mode_actual, url_device, nom_dev
 
     if debug:
         print( "Fonction comparaison switch selecteur : "+ nom_device+' idx:'+idx_switch_domoticz)
-        print("Etat actuel du switch Domoticz: "+str(domoticz_switch_actual))
     
     # Association du level actuel du swith avec les noms définis en paramètres :
     # Utilisation ou non de la variable 'on_off', si oui, utilisation si 'on_off' = 'off' pour le level_0 du switch
@@ -1151,10 +1150,9 @@ def gestion_switch_selector_domoticz (cozytouch_mode_actual, url_device, nom_dev
             domoticz_switch_state_to_send = 70
 
     if debug:
+        print("Etat actuel du switch Domoticz: "+str(domoticz_switch_actual))
         print("Etat actuel du mode dans Domoticz: "+str(domoticz_mode_actual))
-    if debug:
         print("Etat ancien du mode dans Domoticz: "+str(domoticz_mode_old))
-    if debug:
         print("Etat actuel du mode dans Cozytouch: "+str(cozytouch_mode_actual))
 
     # Comparaison du mode en cours de cozytouch et du mode en cours de domoticz
@@ -1192,13 +1190,18 @@ def gestion_switch_selector_domoticz (cozytouch_mode_actual, url_device, nom_dev
             var_save(cozytouch_mode_actual, ('save_'+str(idx_switch_domoticz)))
             return (2,cozytouch_mode_actual)
             
-    else :
-        if debug:
+    elif domoticz_mode_old != 'init' :
+        # Cozytouch et Domoticz synchronisés aucun changement
+        if debug :
             print("Cas 3 : aucun changement de mode, aucune action")
-        # ou simple rafraichissement domoticz si aucun changement
-        # domoticz_write_device_switch_selector(domoticz_switch_state_to_send,idx_switch_domoticz)
-        # var_save(cozytouch_mode_actual, ('save_'+str(idx_switch_domoticz)))
         return (3,cozytouch_mode_actual)
+    else:# si domoticz_mode_old=='init' 
+        # Domoticz non initialisé
+        if debug:
+            print("Cas 4 : initialisation du  mode dans Domoticz")
+        domoticz_write_device_switch_selector(domoticz_switch_state_to_send,idx_switch_domoticz)
+        var_save(cozytouch_mode_actual, ('save_'+str(idx_switch_domoticz)))
+        return (4,cozytouch_mode_actual)
 
 
 
