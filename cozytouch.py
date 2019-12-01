@@ -110,7 +110,7 @@ def domoticz_write_log(message):
     myurl=url_domoticz+u'command&param=addlogmessage&message='+message
     req=requests.get(myurl)
     if debug:
-        print('  GET-> '+myurl+" : "+str(req.status_code))
+        print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
     if (req.status_code != 200):
         http_error(req.status_code,req.reason) # Appel fonction sur erreur HTTP
     return req.status_code
@@ -125,7 +125,7 @@ def domoticz_write_device_analog(valeur, idx):
     myurl=url_domoticz+'command&param=udevice&idx='+idx+'&nvalue=0&svalue='+valeur
     req=requests.get(myurl)
     if debug:
-        print('  GET-> '+myurl+" : "+str(req.status_code))
+        print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
     if (req.status_code != 200):
         http_error(req.status_code,req.reason) # Appel fonction sur erreur HTTP
     return req.status_code
@@ -139,7 +139,7 @@ def domoticz_write_device_switch_onoff(etat, idx):
     myurl=url_domoticz+'command&param=switchlight&idx='+idx+'&switchcmd='+etat
     req=requests.get(myurl)
     if debug:
-        print('  GET-> '+myurl+" : "+str(req.status_code))
+        print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
     if (req.status_code != 200):
         http_error(req.status_code,req.reason) # Appel fonction sur erreur HTTP
     return req.status_code
@@ -152,7 +152,7 @@ def domoticz_write_device_switch_selector(level, idx):
     myurl=url_domoticz+'command&param=switchlight&idx='+idx+'&switchcmd=Set%20Level&level='+level
     req=requests.get(myurl)
     if debug:
-        print('  GET-> '+myurl+" : "+str(req.status_code))
+        print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
     if (req.status_code != 200):
         http_error(req.status_code,req.reason) # Appel fonction sur erreur HTTP
     return req.status_code
@@ -166,7 +166,7 @@ def domoticz_read_device_analog(idx):
     myurl=url_domoticz+'devices&rid='+idx
     req=requests.get(myurl)
     if debug:
-        print('  GET-> '+myurl+" : "+str(req.status_code))
+        print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
 
     # Réponse HTTP 200 OK
     if req.status_code==200 :
@@ -188,7 +188,7 @@ def domoticz_read_device_switch_selector(idx):
     myurl=url_domoticz+u'devices&rid='+idx
     req=requests.get(myurl)
     if debug:
-        print('  GET-> '+myurl+" : "+str(req.status_code))
+        print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
 
     # Réponse HTTP 200 OK
     if req.status_code==200 :
@@ -209,7 +209,7 @@ def domoticz_read_user_variable(idx):
     myurl=url_domoticz+'command&param=getuservariables'
     req=requests.get(myurl)
     if debug:
-        print('  GET-> '+myurl+" : "+str(req.status_code))
+        print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
 
     # Réponse HTTP 200 OK
     if req.status_code==200 :
@@ -230,7 +230,7 @@ def domoticz_create_user_variable(nom_variable, valeur_variable):
     myurl=url_domoticz+'command&param=saveuservariable&vname='+nom_variable+'&vtype=2&vvalue='+valeur_variable
     req=requests.get(myurl)
     if debug:
-        print('  GET-> '+myurl+" : "+str(req.status_code))
+        print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
 
     # Réponse HTTP 200 OK
     if req.status_code==200 :
@@ -241,7 +241,7 @@ def domoticz_create_user_variable(nom_variable, valeur_variable):
             myurl=url_domoticz+'command&param=getuservariables'
             req=requests.get(myurl)
             if debug:
-                print('  GET-> '+myurl+" : "+str(req.status_code))
+                print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
 
             # Réponse HTTP 200 OK
             if req.status_code==200 :
@@ -268,7 +268,7 @@ def domoticz_rename_device(idx, nom):
     myurl=url_domoticz+'command&param=renamedevice&idx='+idx+'&name='+nom
     req=requests.get(myurl)
     if debug:
-        print('  GET-> '+myurl+" : "+str(req.status_code))
+        print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
     if (req.status_code != 200):
         http_error(req.status_code,req.reason) # Appel fonction sur erreur HTTP
     return req.status_code
@@ -280,7 +280,7 @@ def domoticz_add_virtual_harware():
     myurl=url_domoticz+'command&param=addhardware&htype=15&port=1&name=Cozytouch_V'+str(version)+'&enabled=true'
     req=requests.get(myurl)
     if debug:
-        print('  GET-> '+myurl+" : "+str(req.status_code))
+        print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
 
     # Réponse HTTP 200 OK
     if req.status_code==200 :
@@ -306,7 +306,7 @@ def domoticz_add_virtual_device(idx,typ,nom,option='none'):
     print myurl
     req=requests.get(myurl)
     if debug:
-        print('  GET-> '+myurl+" : "+str(req.status_code))
+        print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
     
     # Réponse HTTP 200 OK
     if req.status_code==200 :
@@ -402,7 +402,7 @@ def cozytouch_GET(json):
     cookies=var_restore('cookies')
     req = requests.get(myurl,headers=headers,cookies=cookies)
     if debug:
-        print('  GET-> '+myurl+" : "+str(req.status_code))
+        print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
 
     if req.status_code==200 : # Réponse HTTP 200 : OK
             data=req.json()
@@ -472,7 +472,7 @@ def test_exist_cozytouch_domoticz_hw_and_backup_store():
         myurl='http://'+domoticz_ip+':'+domoticz_port+'/json.htm?type=hardware'
         req=requests.get(myurl) # renvoie la liste du hardware domoticz
         if debug:
-            print('  GET-> '+myurl+" : "+str(req.status_code))
+            print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
         
         if req.status_code==200 : #Réponse HTTP OK
             data=json.loads(req.text)
@@ -713,7 +713,7 @@ def ajout_radiateur(idx,liste,url,x,label):
     myurl=u'http://'+domoticz_ip+u':'+domoticz_port+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+radiateur[u'idx_switch_mode']+u'&name='+nom_switch+u'+&options='+option
     req=requests.get(myurl)
     if debug:
-        print('  GET-> '+myurl+" : "+str(req.status_code))
+        print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
 
     # Création switch selecteur (level_10=frostprotection/level_20=eco/level_30=confort-2/level_40=confort-1/level_50=confort) :
     nom_switch = u'Ordre '+nom
@@ -723,7 +723,7 @@ def ajout_radiateur(idx,liste,url,x,label):
     myurl=u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+radiateur[u'idx_switch_level']+u'&name='+nom_switch+u'+&options='+option
     req=requests.get(myurl)
     if debug:
-        print('  GET-> '+myurl+" : "+str(req.status_code))
+        print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
 
 
     # Consigne de dérogation valable en mode auto, applique une consigne de dérogation commande :"setDerogatedTargetTemperature" + température souhaité
@@ -777,7 +777,7 @@ def ajout_module_fil_pilote(idx,liste,url,x,label):
     myurl=u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+radiateur[u'idx_switch']+u'&name='+nom_switch+u'+&options='+option
     req=requests.get(myurl)
     if debug:
-        print('  GET-> '+myurl+" : "+str(req.status_code))
+        print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
 
     # Log Domoticz :
     domoticz_write_log(u"Cozytouch : creation "+nom+u" ,url: "+url)
@@ -808,7 +808,7 @@ def ajout_chauffe_eau(idx,liste,url,x,label):
     myurl='http://'+domoticz_ip+":"+domoticz_port+'/json.htm?type=setused&idx='+(chauffe_eau['idx_switch_auto_manu'])+'&name='+nom_switch+'&description=&strparam1=&strparam2=&protected=false&switchtype=18&customimage=15&used=true&addjvalue=0&addjvalue2=0&options='+option
     req=requests.get(myurl)
     if debug:
-        print('  GET-> '+myurl+" : "+str(req.status_code))
+        print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
 
     # Switch on/off
     nom_switch_on_off = 'Etat '+nom 
@@ -816,7 +816,7 @@ def ajout_chauffe_eau(idx,liste,url,x,label):
     myurl='http://'+domoticz_ip+":"+domoticz_port+'/json.htm?type=setused&idx='+(chauffe_eau['idx_on_off'])+'&name='+nom_switch_on_off+'&description=&strparam1=&strparam2=&protected=false&switchtype=0&customimage=15&used=true&addjvalue=0&addjvalue2=0&options='
     req=requests.get(myurl)
     if debug:
-        print('  GET-> '+myurl+" : "+str(req.status_code))
+        print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
 
     # Mesure température eau:
     nom_mesure = 'Temperature eau '+nom 
@@ -830,7 +830,7 @@ def ajout_chauffe_eau(idx,liste,url,x,label):
     myurl='http://'+domoticz_ip+":"+domoticz_port+'/json.htm?type=setused&idx='+(chauffe_eau['idx_conso_eau'])+'&name='+nom_compteur+'&description=&switchtype=2&addjvalue=0&used=true&options='
     req=requests.get(myurl)
     if debug:
-        print('  GET-> '+myurl+" : "+str(req.status_code))
+        print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
 
     # Compteur temps de fonctionnement pompe à chaleur :
     nom_compteur_pompe = 'Pompe a chaleur '+nom 
@@ -840,7 +840,7 @@ def ajout_chauffe_eau(idx,liste,url,x,label):
     myurl='http://'+domoticz_ip+":"+domoticz_port+'/json.htm?type=setused&idx='+(chauffe_eau['idx_compteur_pompe'])+'&name='+nom_compteur_pompe+'&switchtype=3&addjvalue=0&used=true&options='+option
     req=requests.get(myurl)
     if debug:
-        print('  GET-> '+myurl+" : "+str(req.status_code))
+        print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
     
     # Compteur d'énergie :
     nom_compteur= 'Energie '+nom 
@@ -876,7 +876,7 @@ def ajout_PAC_main_control  (idx,liste,url,x,label):
     myurl=u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?type=setused&idx='+(PAC_main_control[u'idx_switch_mode'])+u'&name='+nom_switch+u'&description=&strparam1=&strparam2=&protected=false&switchtype=18&customimage=7&used=true&addjvalue=0&addjvalue2=0&options='+option
     req=requests.get(myurl)
     if debug:
-        print('  GET-> '+myurl+" : "+str(req.status_code))
+        print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
 
     # Log Domoticz :
     domoticz_write_log(u"Cozytouch : creation "+nom+u" ,url: "+url)
@@ -913,7 +913,7 @@ def ajout_PAC_zone_control  (idx,liste,url,x,label):
     myurl=u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?type=setused&idx='+(PAC_zone_control[u'idx_switch_mode'])+u'&name='+nom_switch+u'&description=&strparam1=&strparam2=&protected=false&switchtype=18&customimage=7&used=true&addjvalue=0&addjvalue2=0&options='+option
     req=requests.get(myurl)
     if debug:
-        print('  GET-> '+myurl+" : "+str(req.status_code))
+        print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
 
     # Consigne température Confort en mode chauffage : (core:ComfortHeatingTargetTemperatureState)
     nom_cons_conf_chauffage = u'Confort chauff. '+nom 
@@ -1108,8 +1108,7 @@ def gestion_switch_selector_domoticz (cozytouch_mode_actual, url_device, nom_dev
     domoticz_mode_old = var_restore('save_'+str(idx_switch_domoticz),format_str=True) # On demande une initialisation avec 'init'
 
     if debug:
-        print( "\nFonction comparaison switch selecteur : "+ nom_device+' idx:'+idx_switch_domoticz)
-        print("Etat actuel du switch Domoticz: "+str(domoticz_switch_actual))
+        print( "Fonction comparaison switch selecteur : "+ nom_device+' idx:'+idx_switch_domoticz)
     
     # Association du level actuel du swith avec les noms définis en paramètres :
     # Utilisation ou non de la variable 'on_off', si oui, utilisation si 'on_off' = 'off' pour le level_0 du switch
@@ -1152,10 +1151,9 @@ def gestion_switch_selector_domoticz (cozytouch_mode_actual, url_device, nom_dev
             domoticz_switch_state_to_send = 70
 
     if debug:
+        print("Etat actuel du switch Domoticz: "+str(domoticz_switch_actual))
         print("Etat actuel du mode dans Domoticz: "+str(domoticz_mode_actual))
-    if debug:
         print("Etat ancien du mode dans Domoticz: "+str(domoticz_mode_old))
-    if debug:
         print("Etat actuel du mode dans Cozytouch: "+str(cozytouch_mode_actual))
 
     # Comparaison du mode en cours de cozytouch et du mode en cours de domoticz
@@ -1192,13 +1190,19 @@ def gestion_switch_selector_domoticz (cozytouch_mode_actual, url_device, nom_dev
             domoticz_write_device_switch_selector(domoticz_switch_state_to_send ,idx_switch_domoticz)
             var_save(cozytouch_mode_actual, ('save_'+str(idx_switch_domoticz)))
             return (2,cozytouch_mode_actual)
-            
-    else :
+
+    elif  domoticz_mode_old=='init' :
+        # Domoticz non initialisé
         if debug:
-            print("Cas 3 : aucun changement de mode, rafraichissement domoticz")
-        # ou simple rafraichissement domoticz si aucun changement
+             print("Cas 4 : initialisation du  mode dans Domoticz")
         domoticz_write_device_switch_selector(domoticz_switch_state_to_send,idx_switch_domoticz)
         var_save(cozytouch_mode_actual, ('save_'+str(idx_switch_domoticz)))
+        return (4,cozytouch_mode_actual)
+
+    else : 
+        # Cozytouch et Domoticz synchronisés aucun changement
+        if debug :
+            print("Cas 3 : aucun changement de mode, aucune action")
         return (3,cozytouch_mode_actual)
 
 
