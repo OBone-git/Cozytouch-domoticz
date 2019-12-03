@@ -303,7 +303,6 @@ def domoticz_add_virtual_device(idx,typ,nom,option='none'):
     idx = str(idx).decode("utf-8")
     typ = str(typ).decode("utf-8")
     myurl=url_domoticz+u'createvirtualsensor&idx='+idx+u'&sensorname='+nom+u'+&sensortype='+typ+req_option
-    print myurl
     req=requests.get(myurl)
     if debug:
         print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
