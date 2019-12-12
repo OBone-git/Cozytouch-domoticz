@@ -1014,9 +1014,11 @@ def Add_DHWP_THERM (idx,liste,url,x,label,name):
 
         # Add Water volume estimation (core:V40WaterVolumeEstimationState)
         # V40 is measured in litres (L) and shows the amount of warm (mixed) water with a temperature of 40℃, which can be drained from a switched off electric water heater
-        widget_name = u'Estimated water '+nom
-        DHWP_THERM[u'idx_water_estimation']= domoticz_add_virtual_device(idx,1004,widget_name ,option='liter')
-
+        widget_name = u'Estimated volume at 40 deg '+nom
+        DHWP_THERM[u'idx_water_estimation']= domoticz_add_virtual_device(idx,113,widget_name)
+        # Personnalisation du compteur
+        send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?addjvalue=0&addjvalue2=0&customimage=2&description=&idx='+(DHWP_THERM['idx_water_estimation'])+'&name='+widget_name+'&switchtype=2&addjvalue=0&addjvalue2=0&used=true&options=')
+    
     # Log Domoticz :
     domoticz_write_log(u"Cozytouch : création "+nom+u" ,url: "+url)
     
