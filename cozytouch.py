@@ -6,23 +6,16 @@
 # review: Yannig Nov 2018
 # modification : sg2 Fev 2019
 
-# modification (V36): OBone 09/2019 :
-'''
-Ajout des classes :
-AtlanticPassAPCZoneControlMainComponent = PAC élément central zone Control
-AtlanticPassAPCZoneControlZoneComponent = zone PAC
-AtlanticDomesticHotWaterProductionV3IOComponent = chauffe eau thermodynamique
-Modifications : fonctions de MAJ consigne,  MAJ switch sélecteur
-Classe AtlanticElectricalHeaterWithAdjustableTemperatureSetpointIOComponent : Affichage et prise en compte de la T°C éco au format réel (pas au format écart par rapport à la consigne confort)
-'''
+# modification : OBone 2019
+# Ajout classe ['DHWP_THERM_V2_MURAL_IO']="io:AtlanticDomesticHotWaterProductionV2_MURAL_IOComponent"
+# info: DHWP = Domestic Hot Water Production
 
-# Améliorations à prévoir, si il y a des courageux :
+# TODO list:
 # Prise en compte du mode dérogation sur les AtlanticElectricalHeaterWithAdjustableTemperatureSetpointIOComponent
 # Prise en compte du mode dérogation sur les AtlanticPassAPCZoneControlZoneComponent (pas testé sur l'appli Cozytouch)
 # Affichage du mode éco ou confort sur les AtlanticPassAPCZoneControlZoneComponent (en mode prog sur lez zones)
 
-
-####EN TEST :
+# En TEST :
 # RADIATEUR : MODIFIER LA FONCTION GESTION CONSIGNE POUR SORTIR LE CALCUL DE LA TEMP ECO
 # PAC : AJOUTER LE MODE ECO OU CONFORT EN MODE PROG SUR LES ZONES
 
@@ -85,7 +78,7 @@ Dictionnaire devices principaux cozytouch
     AtlanticDomesticHotWaterProductionIOComponent = chauffe eau
     AtlanticPassAPCZoneControlMainComponent = PAC élément central zone Control
     AtlanticPassAPCZoneControlZoneComponent = zone PAC
-    AtlanticDomesticHotWaterProductionV3IOComponent = chauffe eau thermodynamique
+    AtlanticDomesticHotWaterProductionV3IOComponent = Chauffe eau thermodynamique
     PodMiniComponent = bridge Cozytouch
 '''
 dict_cozytouch_devtypes = {}
@@ -95,9 +88,9 @@ dict_cozytouch_devtypes['module fil pilote']='io:AtlanticElectricalHeaterIOCompo
 dict_cozytouch_devtypes['bridge cozytouch']='internal:PodMiniComponent'
 dict_cozytouch_devtypes['PAC main control']='io:AtlanticPassAPCZoneControlMainComponent'
 dict_cozytouch_devtypes['PAC zone control']='io:AtlanticPassAPCZoneControlZoneComponent'
-dict_cozytouch_devtypes['chauffe eau thermodynamique V3']="io:AtlanticDomesticHotWaterProductionV3IOComponent"
-dict_cozytouch_devtypes['chauffe eau thermodynamique']="io:AtlanticDomesticHotWaterProductionIOComponent"
-
+dict_cozytouch_devtypes['DHWP_THERM_V3_IO']="io:AtlanticDomesticHotWaterProductionV3IOComponent"
+dict_cozytouch_devtypes['DHWP_THERM_IO']="io:AtlanticDomesticHotWaterProductionIOComponent"
+dict_cozytouch_devtypes['DHWP_THERM_V2_MURAL_IO']="io:AtlanticDomesticHotWaterProductionV2_MURAL_IOComponent"
 '''
 **********************************************************
 Fonctions génériques pour Domoticz
@@ -628,8 +621,8 @@ def decouverte_devices():
                 liste= ajout_PAC_zone_control (save_idx,liste,url,x,read_label_from_cozytouch(data,x)) 
                 p+=1
 
-            elif name == dict_cozytouch_devtypes.get(u'chauffe eau thermodynamique V3') or name == dict_cozytouch_devtypes.get(u'chauffe eau thermodynamique'):
-                liste= ajout_chauffe_eau_thermodynamique_V3 (save_idx,liste,url,x,(data[u'setup'][u'rootPlace'][u'label'])) # label sur rootplace
+            elif name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V3_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V2_MURAL_IO') :
+                liste= Add_DHWP_THERM (save_idx,liste,url,x,(data[u'setup'][u'rootPlace'][u'label']),data) # label sur rootplace
                 p+=1
 
             elif name == dict_cozytouch_devtypes.get(u'bridge cozytouch'):
@@ -943,65 +936,88 @@ def ajout_PAC_zone_control  (idx,liste,url,x,label):
     print(u"Ajout: "+nom)
     return liste
 
-def ajout_chauffe_eau_thermodynamique_V3(idx,liste,url,x,label):
-    ''' Fonction ajout chauffe eau thermodynamique V3
-    '''
+def Add_DHWP_THERM (idx,liste,url,x,label):
+    #Fonction ajout DHWP_THERM_IO
+
+    ######
+    # Widgets added for Common Class :
     
     # création du nom suivant la position JSON du device dans l'API Cozytouch
-    nom = u'chauffe eau  '+label
+    nom = u'DHWP '+label
     
     # création du dictionnaire de définition du device
-    chauffe_eau_thermodynamique_V3= {}
-    chauffe_eau_thermodynamique_V3[u'url'] = url
-    chauffe_eau_thermodynamique_V3[u'x']= x
-    chauffe_eau_thermodynamique_V3[u'nom']= nom
+    DHWP_THERM= {}
+    DHWP_THERM[u'url'] = url
+    DHWP_THERM[u'x']= x
+    DHWP_THERM[u'nom']= nom
 
      # Switch on/off (OperatingModeCapabilitiesState)
     nom_switch_on_off = u'Etat chauffe '+nom
-    chauffe_eau_thermodynamique_V3[u'idx_on_off']= domoticz_add_virtual_device(idx,6,nom_switch_on_off)
-    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?type=setused&idx='+(chauffe_eau_thermodynamique_V3['idx_on_off'])+'&name='+nom_switch_on_off+'&description=&strparam1=&strparam2=&protected=false&switchtype=0&customimage=15&used=true&addjvalue=0&addjvalue2=0&options=')
+    DHWP_THERM[u'idx_on_off']= domoticz_add_virtual_device(idx,6,nom_switch_on_off)
+    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?type=setused&idx='+(DHWP_THERM['idx_on_off'])+'&name='+nom_switch_on_off+'&description=&strparam1=&strparam2=&protected=false&switchtype=0&customimage=15&used=true&addjvalue=0&addjvalue2=0&options=')
 
     # Compteur temps de fonctionnement pompe à chaleur (HeatPumpOperatingTimeState)
     nom_compteur_pompe = u'Compteur PAC '+nom
-    chauffe_eau_thermodynamique_V3['idx_compteur_pompe']= domoticz_add_virtual_device(idx,113,nom_compteur_pompe)
+    DHWP_THERM['idx_compteur_pompe']= domoticz_add_virtual_device(idx,113,nom_compteur_pompe)
     # Personnalisation du switch (Modification du nom des levels et de l'icone
     option = 'VmFsdWVRdWFudGl0eTpIZXVyZXM7VmFsdWVVbml0czpIOw=='
-    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?type=setused&idx='+(chauffe_eau_thermodynamique_V3['idx_compteur_pompe'])+'&name='+nom_compteur_pompe+'&description=&switchtype=3&addjvalue=0&used=true&options='+option)
+    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?type=setused&idx='+(DHWP_THERM['idx_compteur_pompe'])+'&name='+nom_compteur_pompe+'&description=&switchtype=3&addjvalue=0&used=true&options='+option)
 
     # Compteur d'énergie (ElectricEnergyConsumptionState)
     nom_compteur= u'Energie '+nom
-    chauffe_eau_thermodynamique_V3[u'idx_compteur_energie']= domoticz_add_virtual_device(idx,113,nom_compteur)
+    DHWP_THERM[u'idx_compteur_energie']= domoticz_add_virtual_device(idx,113,nom_compteur)
 
     # Consigne température  :
     nom_cons_conf = u'Consigne T°C '+nom 
-    chauffe_eau_thermodynamique_V3[u'idx_cons_temp']= domoticz_add_virtual_device(idx,8,nom_cons_conf )
+    DHWP_THERM[u'idx_cons_temp']= domoticz_add_virtual_device(idx,8,nom_cons_conf )
 
     # Switch selecteur :
     nom_switch = u'Mode '+nom 
-    chauffe_eau_thermodynamique_V3[u'idx_switch_mode']= domoticz_add_virtual_device(idx,1002,nom)
+    DHWP_THERM[u'idx_switch_mode']= domoticz_add_virtual_device(idx,1002,nom)
     # Personnalisation du switch (Modification du nom des levels et de l'icone)
     option = u'TGV2ZWxOYW1lczpPZmZ8TWFudWFsfE1hbnVhbCtlY298QXV0b3xCb29zdDtMZXZlbEFjdGlvbnM6fHx8fDtTZWxlY3RvclN0eWxlOjA7TGV2ZWxPZmZIaWRkZW46ZmFsc2U%3D'
-    send=requests.get(u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(chauffe_eau_thermodynamique_V3[u'idx_switch_mode'])+'&name='+nom_switch+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
+    send=requests.get(u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(DHWP_THERM[u'idx_switch_mode'])+'&name='+nom_switch+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
 
     # Switch selecteur boost duration:
     nom_switch = u'Durée boost (jours) '+nom
-    chauffe_eau_thermodynamique_V3['idx_boost_duration']= domoticz_add_virtual_device(idx,1002,nom_switch)
+    DHWP_THERM[u'idx_boost_duration']= domoticz_add_virtual_device(idx,1002,nom_switch)
     # Personnalisation du switch (Modification du nom des levels et de l'icone
     option = u'TGV2ZWxOYW1lczowfDF8MnwzfDR8NXw2fDc7TGV2ZWxBY3Rpb25zOnx8fHx8fHw7U2VsZWN0b3JTdHlsZTowO0xldmVsT2ZmSGlkZGVuOmZhbHNl'
-    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(chauffe_eau_thermodynamique_V3['idx_boost_duration'])+'&name='+nom_switch+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
+    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(DHWP_THERM['idx_boost_duration'])+'&name='+nom_switch+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
 
     # Switch selecteur durée absence :
     nom_switch = u'Durée absence (jours) '+nom
-    chauffe_eau_thermodynamique_V3['idx_away_duration']= domoticz_add_virtual_device(idx,1002,nom_switch)
+    DHWP_THERM[u'idx_away_duration']= domoticz_add_virtual_device(idx,1002,nom_switch)
     # Personnalisation du switch (Modification du nom des levels et de l'icone
     option = u'TGV2ZWxOYW1lczowfDF8MnwzfDR8NXw2fDc7TGV2ZWxBY3Rpb25zOnx8fHx8fHw7U2VsZWN0b3JTdHlsZTowO0xldmVsT2ZmSGlkZGVuOmZhbHNl'
-    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(chauffe_eau_thermodynamique_V3['idx_away_duration'])+'&name='+nom_switch+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
+    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(DHWP_THERM['idx_away_duration'])+'&name='+nom_switch+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
+
+    ######
+    # Widgets added only for SubClass  "io:AtlanticDomesticHotWaterProductionV2_MURAL_IOComponent"
+    if value_by_name(data,1,u'controllableName') == 'io:AtlanticDomesticHotWaterProductionV2_MURAL_IOComponent' :
+    
+        # Add Temperature of water (io:MiddleWaterTemperatureState)
+        widget_name = u'T°C '+nom 
+        DHWP_THERM[u'idx_temp_measurement']= domoticz_add_virtual_device(idx,80,widget_name)
+
+        # Add Heat Pump Energy Counter (io:PowerHeatPumpState)
+        widget_name = u'Energy HeatPump '+nom
+        DHWP_THERM[u'idx_energy_counter_heatpump']= domoticz_add_virtual_device(idx,113,widget_name)
+
+        # Add Heat Electrical Energy Counter (io:PowerHeatElectricalState)
+        widget_name = u'Energy Elec '+nom
+        DHWP_THERM[u'idx_energy_counter_heatelec']= domoticz_add_virtual_device(idx,113,widget_name)
+
+        # Add Water volume estimation (core:V40WaterVolumeEstimationState)
+        # V40 is measured in litres (L) and shows the amount of warm (mixed) water with a temperature of 40℃, which can be drained from a switched off electric water heater
+        widget_name = u'Estimated water '+nom
+        DHWP_THERM[u'idx_water_estimation']= domoticz_add_virtual_device(idx,1004,widget_name ,option='liter')
 
     # Log Domoticz :
     domoticz_write_log(u"Cozytouch : création "+nom+u" ,url: "+url)
     
     # ajout du dictionnaire dans la liste des device:
-    liste.append(chauffe_eau_thermodynamique_V3)
+    liste.append(DHWP_THERM)
 
     print ("Ajout: "+nom)
     return liste
@@ -1434,10 +1450,10 @@ def maj_device(data,name,p,x):
                                                          level_0=u'stop',level_10=u'manu',level_20=u'internalScheduling')
 
 
-    '''
-    Mise à jour : Données chauffe eau thermodynamique
-    '''
-    if name == dict_cozytouch_devtypes.get(u'chauffe eau thermodynamique V3') or name == dict_cozytouch_devtypes.get(u'chauffe eau thermodynamique')  :
+    ####
+    # Update function : SubClass DHWP_THERM_V3_IO, DHWP_THERM_IO, DHWP_THERM_V2_MURAL_IO
+            
+    if name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V3_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V2_MURAL_IO')  :
         
         # Etat chauffe on/off
         a = (value_by_name(data,x,u"io:OperatingModeCapabilitiesState"))[u'energyDemandStatus']
@@ -1454,7 +1470,7 @@ def maj_device(data,name,p,x):
         # Compteur temps de fonctionnement pompe à chaleur (io:HeatPumpOperatingTimeState)
         domoticz_write_device_analog(value_by_name(data,x,u'io:HeatPumpOperatingTimeState'),classe.get(u'idx_compteur_pompe'))
 
-        # Compteur d'énergie (core:ElectricEnergyConsumptionState)        
+        # Energy counter (core:ElectricEnergyConsumptionState)        
         domoticz_write_device_analog(value_by_name(data,x+1,u'core:ElectricEnergyConsumptionState'),classe.get(u'idx_compteur_energie'))
 
         # Consigne température (SetTargetTemperature) ou #'core:TemperatureState' si pb
@@ -1497,7 +1513,22 @@ def maj_device(data,name,p,x):
         gestion_switch_selector_domoticz (int(value_by_name(data,x,u'io:AwayModeDurationState')),classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_away_duration'),
                                                     level_0=0, level_10=1, level_20=2, level_30=3, level_40=4, level_50=5, level_60=6,level_70=7,setting_command_mode=u'setAwayModeDuration')
 
-        
+        ######
+        # Update only for SubClass "DHWP_THERM_V2_MURAL_IO"
+        if name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V2_MURAL_IO')  :
+
+            # Temperature measurement (io:MiddleWaterTemperatureState)
+            domoticz_write_device_analog((value_by_name(data,x,u'io:MiddleWaterTemperatureState')),(classe.get(u'idx_temp_measurement')))
+
+            # Heat Pump Energy Counter (io:PowerHeatPumpState)
+            domoticz_write_device_analog((value_by_name(data,x,u'io:PowerHeatPumpState')),(classe.get(u'idx_energy_counter_heatpump')))
+
+            # Heat Electrical Energy Counter (io:PowerHeatElectricalState)
+            domoticz_write_device_analog((value_by_name(data,x,u'io:PowerHeatElectricalState')),(classe.get(u'idx_energy_counter_heatelec')))
+
+            # Water volume estimation  (core:V40WaterVolumeEstimationState)
+            domoticz_write_device_analog((value_by_name(data,x,u'core:V40WaterVolumeEstimationState')),(classe.get(u'idx_water_estimation')))
+
 '''
 **********************************************************
 Déroulement du script
