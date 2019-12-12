@@ -38,6 +38,7 @@ login="xxxxx"
 password="xxxx"
 
 
+
 '''
 Commentaires
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -295,6 +296,7 @@ def domoticz_add_virtual_device(idx,typ,nom,option='none'):
         req_option=u'&sensoroptions=1;'+option
     idx = str(idx).decode("utf-8")
     typ = str(typ).decode("utf-8")
+    
     myurl=url_domoticz+u'createvirtualsensor&idx='+idx+u'&sensorname='+nom+u'+&sensortype='+typ+req_option
     print myurl
     req=requests.get(myurl)
@@ -623,7 +625,7 @@ def decouverte_devices():
                 p+=1
 
             elif name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V3_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V2_MURAL_IO') :
-                liste= Add_DHWP_THERM (save_idx,liste,url,x,(data[u'setup'][u'rootPlace'][u'label']),data) # label sur rootplace
+                liste= Add_DHWP_THERM (save_idx,liste,url,x,(data[u'setup'][u'rootPlace'][u'label']),name) # label sur rootplace
                 p+=1
 
             elif name == dict_cozytouch_devtypes.get(u'bridge cozytouch'):
@@ -786,6 +788,7 @@ def ajout_chauffe_eau(idx,liste,url,x,label):
     '''
     # création du nom suivant la position JSON du device dans l'API Cozytouch
     nom = 'Chauffe eau '+str(label)
+    nom.encode('utf-8')
     
     # création du dictionnaire de définition du device
     chauffe_eau= {}
@@ -937,7 +940,7 @@ def ajout_PAC_zone_control  (idx,liste,url,x,label):
     print(u"Ajout: "+nom)
     return liste
 
-def Add_DHWP_THERM (idx,liste,url,x,label):
+def Add_DHWP_THERM (idx,liste,url,x,label,name):
     #Fonction ajout DHWP_THERM_IO
 
     ######
@@ -945,7 +948,7 @@ def Add_DHWP_THERM (idx,liste,url,x,label):
     
     # création du nom suivant la position JSON du device dans l'API Cozytouch
     nom = u'DHWP '+label
-    
+    nom.encode('utf-8')
     # création du dictionnaire de définition du device
     DHWP_THERM= {}
     DHWP_THERM[u'url'] = url
@@ -969,7 +972,7 @@ def Add_DHWP_THERM (idx,liste,url,x,label):
     DHWP_THERM[u'idx_compteur_energie']= domoticz_add_virtual_device(idx,113,nom_compteur)
 
     # Consigne température  :
-    nom_cons_conf = u'Consigne T°C '+nom 
+    nom_cons_conf = u'Consigne Temp '+nom 
     DHWP_THERM[u'idx_cons_temp']= domoticz_add_virtual_device(idx,8,nom_cons_conf )
 
     # Switch selecteur :
@@ -980,14 +983,14 @@ def Add_DHWP_THERM (idx,liste,url,x,label):
     send=requests.get(u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(DHWP_THERM[u'idx_switch_mode'])+'&name='+nom_switch+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
 
     # Switch selecteur boost duration:
-    nom_switch = u'Durée boost (jours) '+nom
+    nom_switch = u'Duree boost (jours) '+nom
     DHWP_THERM[u'idx_boost_duration']= domoticz_add_virtual_device(idx,1002,nom_switch)
     # Personnalisation du switch (Modification du nom des levels et de l'icone
     option = u'TGV2ZWxOYW1lczowfDF8MnwzfDR8NXw2fDc7TGV2ZWxBY3Rpb25zOnx8fHx8fHw7U2VsZWN0b3JTdHlsZTowO0xldmVsT2ZmSGlkZGVuOmZhbHNl'
     send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(DHWP_THERM['idx_boost_duration'])+'&name='+nom_switch+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
 
     # Switch selecteur durée absence :
-    nom_switch = u'Durée absence (jours) '+nom
+    nom_switch = u'Duree absence (jours) '+nom
     DHWP_THERM[u'idx_away_duration']= domoticz_add_virtual_device(idx,1002,nom_switch)
     # Personnalisation du switch (Modification du nom des levels et de l'icone
     option = u'TGV2ZWxOYW1lczowfDF8MnwzfDR8NXw2fDc7TGV2ZWxBY3Rpb25zOnx8fHx8fHw7U2VsZWN0b3JTdHlsZTowO0xldmVsT2ZmSGlkZGVuOmZhbHNl'
@@ -995,10 +998,10 @@ def Add_DHWP_THERM (idx,liste,url,x,label):
 
     ######
     # Widgets added only for SubClass  "io:AtlanticDomesticHotWaterProductionV2_MURAL_IOComponent"
-    if value_by_name(data,1,u'controllableName') == 'io:AtlanticDomesticHotWaterProductionV2_MURAL_IOComponent' :
+    if name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V2_MURAL_IO') :
     
         # Add Temperature of water (io:MiddleWaterTemperatureState)
-        widget_name = u'T°C '+nom 
+        widget_name = u'Temp '+nom 
         DHWP_THERM[u'idx_temp_measurement']= domoticz_add_virtual_device(idx,80,widget_name)
 
         # Add Heat Pump Energy Counter (io:PowerHeatPumpState)
@@ -1222,6 +1225,12 @@ def gestion_switch_selector_domoticz (cozytouch_mode_actual, url_device, nom_dev
         return (3,cozytouch_mode_actual)
 
 
+def value_by_name(data,device,item):
+    for state in data['setup']['devices'][device]['states']:
+        if state['name'] == item:
+            return state['value']
+    print('Failed to retrieve value '+item+' for device '+data['setup']['devices'][device]['widget'])
+    return None
 
 
 
@@ -1237,13 +1246,6 @@ def maj_device(data,name,p,x):
 
     print("Mise a jour device "+str(p)+" : "+name)
     
-    def value_by_name(data,device,item):
-        for state in data['setup']['devices'][device]['states']:
-            if state['name'] == item:
-                return state['value']
-        print('Failed to retrieve value '+item+' for device '+data['setup']['devices'][device]['widget'])
-        return None
-
     a = var_restore('save_devices')
     classe = a[p]
 
