@@ -553,7 +553,7 @@ def read_label_from_cozytouch(data,x,oid='none'):
             except:
                 label=u'noname'
                 break
-    return label
+    return label.strip()
                     
 def decouverte_devices():
     
