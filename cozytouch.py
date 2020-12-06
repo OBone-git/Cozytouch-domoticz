@@ -4,7 +4,10 @@
 # Script Cozytouch pour Domoticz
 # Auteur : OBone
 # review: Yannig Nov 2018
-# modification : sg2 Fev 2019
+# modification : Tatrox Nov 2020
+
+# modification : Tatrox 2020
+# Ajout de la consigne de dérogation pour les radiateurs
 
 # modification : OBone 2019
 # Ajout classe ['DHWP_THERM_V2_MURAL_IO']="io:AtlanticDomesticHotWaterProductionV2_MURAL_IOComponent"
@@ -26,7 +29,7 @@ import requests, shelve, json, time, unicodedata, os, sys, errno
 Paramètres 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 '''
-version=4
+version=4.1
 
 debug=1 # 0 : pas de traces debug / 1 : traces requêtes http / 2 : dump data json reçues du serveur cozytouch
 
@@ -736,7 +739,11 @@ def ajout_radiateur(idx,liste,url,x,label):
     # Création Consigne température Eco :
     nom_cons_eco= u'Cons. éco '+nom 
     radiateur[u'idx_cons_temp_eco']= domoticz_add_virtual_device(idx,8,nom_cons_eco)
-    
+
+    # Création Consigne température dérogation :
+    nom_cons_derog = u'Cons. dérogation '+nom 
+    radiateur[u'idx_cons_temp_derogation']= domoticz_add_virtual_device(idx,8,nom_cons_derog ) 
+
     # Création Compteur d'énergie :
     nom_compteur= u'Conso '+nom 
     radiateur[u'idx_compteur']= domoticz_add_virtual_device(idx,113,nom_compteur)    
@@ -1051,7 +1058,7 @@ def gestion_consigne(texte,url_device,nom_device, idx_cons_domoticz, cons_device
     idx_cons_domoticz= idx_cons_domoticz.encode("utf-8")
     cons_domoticz_prec = var_restore('save_consigne_'+(nom_device.encode("utf-8"))+idx_cons_domoticz)
 
-    #Si Gestion di mode éco radiateur, on soustrait à la consigne confort (cons_device) , la consigne éco (cons_device_eco) :
+    #Si Gestion du mode éco radiateur, on soustrait à la consigne confort (cons_device) , la consigne éco (cons_device_eco) :
     if cons_device_abais_eco >0 :
         cons_device_confort = cons_device # Sauvegarde consigne cozytouch confort
         cons_device_eco = cons_device - cons_device_abais_eco # Calcul consigne cozytouch éco
@@ -1068,7 +1075,15 @@ def gestion_consigne(texte,url_device,nom_device, idx_cons_domoticz, cons_device
     # si la partie décimale est différente de 0,5°C on arrondit
     if e != 0.5: 
         cons_domoticz = round(cons_domoticz)
-        
+
+    # si c'est une consigne de dérogation, elle est initialisée / peut être remise à 0 par Cozytouch si changement sur le radiateur en local ou via l'application,
+    # ou si on met la consigne "eco" ou "confort".
+    # on force la consigne de dérogation précédente à 1 pour voir le changement
+    # la consigne de dérogation est ensuite traitée comme n'importe quel type de consigne
+    # TO DO : ne pas tester le texte passé en argument de la fonction mais l'objet
+    if texte=="derogation" and cons_domoticz_prec == 0:
+        cons_domoticz_prec = 1
+
     # comparaison avec la consigne en cours
     if cons_device != cons_domoticz and cons_domoticz != cons_domoticz_prec and cons_domoticz_prec > 0:
         # si un écart est détecté
@@ -1279,6 +1294,10 @@ def maj_device(data,name,p,x):
         # Mesure température : Device : TemperatureSensor, Parametre 1 : core:TemperatureState
         domoticz_write_device_analog((value_by_name(data,(x+1),u'core:TemperatureState')),(classe.get(u'idx_mesure_temp')))
 
+        # Consigne de température par dérogation : Device : AtlanticElectricalHeaterWithAdjustableTemperatureSetpointIOComponent, Parametre : core:DerogatedTargetTemperatureState
+        # le texte "derogation" est testé dans la fonction gestion_consigne, attention si modification de celui-ci.
+        gestion_consigne(u'derogation',classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_cons_temp_derogation'),value_by_name(data,x,u'core:DerogatedTargetTemperatureState'),(u'setDerogatedTargetTemperature'))
+
         # Consigne de température confort : Device : AtlanticElectricalHeaterWithAdjustableTemperatureSetpointIOComponent, Parametre 9 : core:ComfortRoomTemperatureState
         gestion_consigne(u'confort',classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_cons_temp_confort'),value_by_name(data,x,u'core:ComfortRoomTemperatureState'),(u'setComfortTemperature'))
 
@@ -1286,7 +1305,7 @@ def maj_device(data,name,p,x):
         gestion_consigne(u'eco',classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_cons_temp_eco'),value_by_name(data,x,'core:ComfortRoomTemperatureState') ,u'setSetpointLoweringTemperatureInProgMode',
                          cons_device_abais_eco = value_by_name(data,x,u'io:SetpointLoweringTemperatureInProgModeState'), # lecture de la consigne éco appliquée par Cozytouch
                          cons_domoticz_confort = domoticz_read_device_analog(classe.get(u'idx_cons_temp_confort'))) # lecture de la consigne confort appliquée dans Domoticz
-
+        
         # Compteur d'énergie: Device : CumulativeElectricPowerConsumptionSensor, Parametre 1 : core:ElectricEnergyConsumptionState
         domoticz_write_device_analog((value_by_name(data,x+4,u'core:ElectricEnergyConsumptionState')),(classe.get(u'idx_compteur')))
             
