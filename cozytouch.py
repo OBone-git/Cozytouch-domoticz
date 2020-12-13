@@ -1085,33 +1085,36 @@ def gestion_consigne(texte,url_device,nom_device, idx_cons_domoticz, cons_device
         cons_domoticz_prec = 1
 
     # comparaison avec la consigne en cours
-    if cons_device != cons_domoticz and cons_domoticz != cons_domoticz_prec and cons_domoticz_prec > 0:
+    if cons_device != cons_domoticz and cons_domoticz != cons_domoticz_prec :
         # si un écart est détecté
         # et si le changement de consigne vient de domoticz, on envoie le changement au device
-        # et si la consigne précédente est différente de 0 (cas au démarrage)
+        
+        if cons_domoticz_prec > 0 or texte=="derogation" :
+            # si la consigne précédente est différente de 0 (cas au démarrage)
+            # ou si c'est une consigne de dérogation, elle est remise à 0 par Cozytouch si sa valeur correspond à son mode de température ex: consigne eco et valeur de dérogation eco
 
-    # Si Gestion du mode éco radiateur :
-        if cons_device_abais_eco > 0 :
-            # On fait consigne confort Domoticz - consigne éco demandée par Domoticz (Cozytouch demande l'écart entre les deux)
-            # On prend la consigne confort Domoticz pour le cas où l'on change les 2 consignes en meme temps
-            cons_domoticz_abais_eco = cons_domoticz_confort - cons_domoticz
-            # Valeur mini de l'écart de consigne = 2°C
-            if cons_domoticz_abais_eco < 2 :
-                cons_domoticz_abais_eco = 2 # Minimum 2°C
-                cons_domoticz = cons_domoticz - cons_domoticz_abais_eco  # Ecriture de la consigne Domoticz
-                domoticz_write_device_analog(cons_domoticz,idx_cons_domoticz) # Mise à jour de la consigne Domoticz
-                domoticz_write_log(u'Cozytouch - '+nom_device+u' : consigne '+texte+u' : consigne doit etre 2°C en dessous de la consigne confort ! ')
+            # Si Gestion du mode éco radiateur :
+            if cons_device_abais_eco > 0 :
+                # On fait consigne confort Domoticz - consigne éco demandée par Domoticz (Cozytouch demande l'écart entre les deux)
+                # On prend la consigne confort Domoticz pour le cas où l'on change les 2 consignes en meme temps
+                cons_domoticz_abais_eco = cons_domoticz_confort - cons_domoticz
+                # Valeur mini de l'écart de consigne = 2°C
+                if cons_domoticz_abais_eco < 2 :
+                    cons_domoticz_abais_eco = 2 # Minimum 2°C
+                    cons_domoticz = cons_domoticz - cons_domoticz_abais_eco  # Ecriture de la consigne Domoticz
+                    domoticz_write_device_analog(cons_domoticz,idx_cons_domoticz) # Mise à jour de la consigne Domoticz
+                    domoticz_write_log(u'Cozytouch - '+nom_device+u' : consigne '+texte+u' : consigne doit etre 2°C en dessous de la consigne confort ! ')
 
-                print "consigne abaissement éco Domoticz " + str(cons_domoticz_abais_eco)
-            cozytouch_POST(url_device,cde_name,cons_domoticz_abais_eco) # Envoi de la consigne limitée à Cozytouch
-            var_save(cons_domoticz, ('save_consigne_'+(nom_device.encode("utf-8"))+idx_cons_domoticz)) # Sauvegarde consigne domoticz
-        else :
-            cozytouch_POST(url_device,cde_name,cons_domoticz)
-        var_save(cons_domoticz, ('save_consigne_'+(nom_device.encode("utf-8"))+idx_cons_domoticz))
-        domoticz_write_log(u'Cozytouch - '+nom_device+u' : nouvelle consigne '+texte+u' transmise: '+str(cons_domoticz)+u'°C')
+                    print "consigne abaissement éco Domoticz " + str(cons_domoticz_abais_eco)
+                cozytouch_POST(url_device,cde_name,cons_domoticz_abais_eco) # Envoi de la consigne limitée à Cozytouch
+                var_save(cons_domoticz, ('save_consigne_'+(nom_device.encode("utf-8"))+idx_cons_domoticz)) # Sauvegarde consigne domoticz
+            else :
+                cozytouch_POST(url_device,cde_name,cons_domoticz)
+            var_save(cons_domoticz, ('save_consigne_'+(nom_device.encode("utf-8"))+idx_cons_domoticz))
+            domoticz_write_log(u'Cozytouch - '+nom_device+u' : nouvelle consigne '+texte+u' transmise: '+str(cons_domoticz)+u'°C')
 
-        if debug:
-            print('Fonction gestion_consigne : Chgt consigne Domoticz, envoie vers Cozytouch : '+(nom_device.encode("utf-8"))+'/'+(texte.encode("utf-8"))+'/'+str(cons_domoticz)+'°C')
+            if debug:
+                print('Fonction gestion_consigne : Chgt consigne Domoticz, envoie vers Cozytouch : '+(nom_device.encode("utf-8"))+'/'+(texte.encode("utf-8"))+'/'+str(cons_domoticz)+'°C')
 
     elif cons_device != cons_domoticz and cons_domoticz == cons_domoticz_prec and cons_domoticz_prec > 0:
         # sinon, le changement vient du device Cozytouch
