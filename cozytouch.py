@@ -10,6 +10,8 @@
 # Ajout classe ['DHWP_THERM_V2_MURAL_IO']="io:AtlanticDomesticHotWaterProductionV2_MURAL_IOComponent"
 # info: DHWP = Domestic Hot Water Production
 
+# modification : allstar71 10/21 Correction authentification/connexion suite MAJ serveur
+
 # TODO list:
 # Prise en compte du mode dérogation sur les AtlanticElectricalHeaterWithAdjustableTemperatureSetpointIOComponent
 # Prise en compte du mode dérogation sur les AtlanticPassAPCZoneControlZoneComponent (pas testé sur l'appli Cozytouch)
@@ -26,7 +28,7 @@ import requests, shelve, json, time, unicodedata, os, sys, errno
 Paramètres
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 '''
-version=4
+version=5
 
 debug=1 # 0 : pas de traces debug / 1 : traces requêtes http / 2 : dump data json reçues du serveur cozytouch
 
