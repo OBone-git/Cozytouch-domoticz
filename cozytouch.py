@@ -441,7 +441,7 @@ def cozytouch_POST(url_device,name,parametre):
     'content-type': "application/json",
     'cache-control': "no-cache"
     }
-    myurl=url_cozytouch+u'/exec/apply'
+    myurl=url_cozytouch+u'../../enduserAPI/exec/apply'
     payload =u'{\"actions\": [{ \"deviceURL\": \"'+url_device+u'\" ,\n\"commands\": [{ \"name\": \"'+name+u'\",\n\"parameters\":['+parametre+u']}]}]}'
     cookies=var_restore('cookies')
     req = requests.post(myurl, data=payload, headers=headers,cookies=cookies)
