@@ -28,7 +28,7 @@ import requests, shelve, json, time, unicodedata, os, sys, errno
 Paramètres
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 '''
-version=5.1
+version=5.2
 
 debug=1 # 0 : pas de traces debug / 1 : traces requêtes http / 2 : dump data json reçues du serveur cozytouch
 
