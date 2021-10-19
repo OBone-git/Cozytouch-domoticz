@@ -23,7 +23,7 @@ PodMiniComponent = Bridge Cozytouch
 4) You must install this library (sudo pip install requests shelves)
 5) You must insert a new line in your crontab to run the script cyclically like every 1,2 or 5 minutes...<br>
   sudo nano /etc/crontab -e <br>
-  */1 *   * * *   <utilisateur>      python/home/'user'/domoticz/scripts/cozytouch.py <br>
+  */1 *   * * *   <utilisateur>      python /home/'user'/domoticz/scripts/cozytouch.py <br>
   And save.
 
 ---------------------------------------------------------------------------------------
