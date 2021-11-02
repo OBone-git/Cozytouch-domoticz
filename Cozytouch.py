@@ -28,7 +28,7 @@ import requests, shelve, json, time, unicodedata, os, sys, errno
 Paramètres
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 '''
-version=5.2.1
+version=5.3
 
 debug=1 # 0 : pas de traces debug / 1 : traces requêtes http / 2 : dump data json reçues du serveur cozytouch
 
@@ -1529,9 +1529,7 @@ def maj_device(data,name,p,x):
                                                          state_cozytouch_on_off = u'stop', # force une lecture d'un état OFF
                                                          level_0=u'stop',level_10=u'manu',level_20=u'internalScheduling')
 
-
-
- ''' Mise à jour : Données PAC HeatPump
+    ''' Mise à jour : Données PAC HeatPump
     '''
     if name == dict_cozytouch_devtypes.get(u'PAC Heatpump') :
 
