@@ -1574,8 +1574,8 @@ def maj_device(data,name,p,x):
 
         # MAJ données générales PAC
 	# Lecture du mode stop/heating/cooling/drying :
-        global mode_PAC
-        mode_PAC = (value_by_name(data,x,u'io:PassAPCOperatingModeState'))
+        global mode_PAC_Heatpump
+        mode_PAC_Heatpump = (value_by_name(data,x,u'io:PassAPCOperatingModeState'))
 	
         # Gestion du sélecteur :
         gestion_switch_selector_domoticz (value_by_name(data,x,u'io:PassAPCOperatingModeState'),classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_switch_mode'),
@@ -1597,7 +1597,7 @@ def maj_device(data,name,p,x):
         gestion_consigne(u'Eco chauff.',classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_cons_temp_eco_chauffage'),value_by_name(data,x,u'core:EcoHeatingTargetTemperatureState'),(u'setEcoHeatingTargetTemperature'))
 
         # Si zone Control en mode 'Heating' :
-        if mode_PAC == u'heating' :
+        if mode_PAC_Heatpump == u'heating' :
             # Gestion consigne en mode manuel (dérogation)
             setting_consigne_zone = u'setDerogatedTargetTemperature' 
             # Gestion switch sélecteur : Prise en compte du mode de fonctionnement de la zone control suivant le paramètre de fonctionnement en mode 'heating'
