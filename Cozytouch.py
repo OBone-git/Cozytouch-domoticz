@@ -1573,6 +1573,10 @@ def maj_device(data,name,p,x):
     if name == dict_cozytouch_devtypes.get(u'PAC Heatpump') :
 
         # MAJ données générales PAC
+	# Lecture du mode stop/heating/cooling/drying :
+        global mode_PAC
+        mode_PAC = (value_by_name(data,x,u'io:PassAPCOperatingModeState'))
+	
         # Gestion du sélecteur :
         gestion_switch_selector_domoticz (value_by_name(data,x,u'io:PassAPCOperatingModeState'),classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_switch_mode'),
                                                      level_0='stop',level_10='heating',level_20='cooling',level_30='drying',setting_command_mode='setPassAPCOperatingMode')
