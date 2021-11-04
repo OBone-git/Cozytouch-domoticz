@@ -1135,7 +1135,7 @@ def ajout_PAC_zone_component (idx,liste,url,x,label):
 
      # Consigne température mode manuel :
     nom_cons_manu = u'Manuel '+nom
-    PAC_zone_control [u'idx_cons_temp_manu']= domoticz_add_virtual_device(idx,8,nom_cons_manu)
+    PAC_zone_component [u'idx_cons_temp_manu']= domoticz_add_virtual_device(idx,8,nom_cons_manu)
     
     # Log Domoticz :
     domoticz_write_log(u"Cozytouch : creation "+nom+u" ,url: "+url)
