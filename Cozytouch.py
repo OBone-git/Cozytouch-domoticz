@@ -1130,7 +1130,7 @@ def ajout_PAC_Outside_Temp (idx,liste,url,x,label):
     # ajout du dictionnaire dans la liste des device:
     liste.append(PAC_Outside_Temp)
 
-    print(u"Ajout: "+nom.encode('utf-8'))
+    #print(u"Ajout: "+nom.encode('utf-8'))
     return liste
 
 def ajout_PAC_Inside_Temp (idx,liste,url,x,label):
@@ -1155,7 +1155,7 @@ def ajout_PAC_Inside_Temp (idx,liste,url,x,label):
     # ajout du dictionnaire dans la liste des device:
     liste.append(PAC_Inside_Temp)
 
-    print(u"Ajout: "+nom.encode('utf-8'))
+    #print(u"Ajout: "+nom.encode('utf-8'))
     return liste
 
 def ajout_PAC_zone_component (idx,liste,url,x,label):
