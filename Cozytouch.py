@@ -1114,7 +1114,7 @@ def ajout_PAC_Outside_Temp (idx,liste,url,x,label):
     '''
     # création du nom 
     nom = u'Outside T°C'
-
+	
     # création du dictionnaire de définition du device
     PAC_Outside_Temp = {}
     PAC_Outside_Temp [u'url'] = url
@@ -1130,7 +1130,7 @@ def ajout_PAC_Outside_Temp (idx,liste,url,x,label):
     # ajout du dictionnaire dans la liste des device:
     liste.append(PAC_Outside_Temp)
 
-    print(u"Ajout: "+nom)
+    print(u"Ajout: "+nom.encode('utf-8'))
     return liste
 
 def ajout_PAC_Inside_Temp (idx,liste,url,x,label):
@@ -1138,7 +1138,8 @@ def ajout_PAC_Inside_Temp (idx,liste,url,x,label):
     '''
     # création du nom 
     nom = u'Inside T°C'
-
+	
+	
     # création du dictionnaire de définition du device
     PAC_Inside_Temp = {}
     PAC_Inside_Temp [u'url'] = url
@@ -1154,7 +1155,7 @@ def ajout_PAC_Inside_Temp (idx,liste,url,x,label):
     # ajout du dictionnaire dans la liste des device:
     liste.append(PAC_Inside_Temp)
 
-    print(u"Ajout: "+nom)
+    print(u"Ajout: "+nom.encode('utf-8'))
     return liste
 
 def ajout_PAC_zone_component (idx,liste,url,x,label):
