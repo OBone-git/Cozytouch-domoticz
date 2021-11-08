@@ -1661,7 +1661,7 @@ def maj_device(data,name,p,x):
 
     ''' Mise à jour : Données PAC HeatPump
     '''
-    if name == dict_cozytouch_devtypes.get(u'PAC Heatpump') :
+    if name == dict_cozytouch_devtypes.get('PAC Heatpump') :
 
         # Debug sélecteur Heatpump :
         print u'Donnees PAC HeatPump, valeur : io:PassAPCOperatingModeState'
