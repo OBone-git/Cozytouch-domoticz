@@ -239,6 +239,11 @@ def domoticz_create_user_variable(nom_variable, valeur_variable):
     # Réponse HTTP 200 OK
     if req.status_code==200 :
         data=json.loads(req.text)
+    elif req.status_code==400 :
+        myurl=url_domoticz+'command&param=saveuservariable&vname='+nom_variable+'&vtype=0&vvalue='+valeur_variable
+        req=requests.get(myurl)
+        if debug:
+            print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
         
         if data[u'status'] == ('Variable name already exists!') or ('OK'):
             myurl=url_domoticz+'command&param=getuservariables'
