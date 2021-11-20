@@ -230,7 +230,7 @@ def domoticz_create_user_variable(nom_variable, valeur_variable):
     ''' création d'une variable utilisateur dans domoticz
     renvoie l'idx créé
     '''
-
+    # Requete de création de variable
     myurl=url_domoticz+'command&param=adduservariable&vname='+nom_variable+'&vtype=0&vvalue='+valeur_variable
     req=requests.get(myurl)
     if debug:
@@ -239,37 +239,44 @@ def domoticz_create_user_variable(nom_variable, valeur_variable):
     # Réponse HTTP 200 OK
     if req.status_code==200 :
         data=json.loads(req.text)
-		
-	# Envoi d'une requete différente sur une version precedente de Domoticz
-	if data[u'status'] == ('ERR') :
-		myurl=url_domoticz+'command&param=saveuservariable&vname='+nom_variable+'&vtype=0&vvalue='+valeur_variable
-        req=requests.get(myurl)
-		data=json.loads(req.text)
-		if debug:
-			print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
-			
-		# Variable existante ou créée 
-        if data[u'status'] == ('Variable name already exists!') or ('OK'):
+	
+        # Si status de retard 'ERR' : Envoi d'une requete différente sur une version precedente de Domoticz
+        if data[u'status'] == ('ERR') :
+            myurl=url_domoticz+'command&param=saveuservariable&vname='+nom_variable+'&vtype=0&vvalue='+valeur_variable
+            req=requests.get(myurl)
+            data=json.loads(req.text)
+            if debug:
+                    print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
+
+            # Variable existante ou créée 
+            if data[u'status'] == ('Variable name already exists!') or ('OK'):
+                myurl=url_domoticz+'command&param=getuservariables'
+                req=requests.get(myurl)
+                if debug:
+                    print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
+                        
+        # Variable existante ou créée 
+        elif data[u'status'] == ('Variable name already exists!') or ('OK'):
             myurl=url_domoticz+'command&param=getuservariables'
             req=requests.get(myurl)
             if debug:
                 print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
 
-            # Réponse HTTP 200 OK
-            if req.status_code==200 :
-                data=json.loads(req.text)
-                for a in data[u'result']:
-                    if a[u'Name'] == nom_variable:
-                        idx = a[u'idx']
-                return idx
+                # Réponse HTTP 200 OK
+                if req.status_code==200 :
+                    data=json.loads(req.text)
+                    for a in data[u'result']:
+                        if a[u'Name'] == nom_variable:
+                            idx = a[u'idx']
+                    return idx
+                else:
+                    http_error(req.status_code,req.reason) # Appel fonction sur erreur HTTP
             else:
-                http_error(req.status_code,req.reason) # Appel fonction sur erreur HTTP
+                print("!!!! Echec creation variable domoticz "+nom_variable)
         else:
-            print("!!!! Echec creation variable domoticz "+nom_variable)
-    else:
-        http_error(req.status_code,req.reason) # Appel fonction sur erreur HTTP
+            http_error(req.status_code,req.reason) # Appel fonction sur erreur HTTP
 
-    return None
+        return None
 
 def domoticz_rename_device(idx, nom):
     ''' renomme un device dans domoticz
