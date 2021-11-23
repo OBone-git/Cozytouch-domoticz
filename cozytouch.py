@@ -1236,9 +1236,20 @@ def ajout_PAC_zone_component (idx,liste,url,x,label):
     nom_cons_manu = u'Manuel '+nom
     PAC_zone_component [u'idx_cons_temp_manu']= domoticz_add_virtual_device(idx,8,nom_cons_manu)
 
-    # Création d'une variable utilisateur contenant la durée de temps de dérogation
-    PAC_zone_component [u'idx_cons_duree_manu']= domoticz_create_user_variable(u'Duree derogation (1 a 8h)', u'2')
-    
+    # Switch selecteur durée absence :
+    nom_switch = u'Duree absence (jours) '+nom
+    PAC_zone_component[u'idx_away_duration']= domoticz_add_virtual_device(idx,1002,nom_switch)
+    # Personnalisation du switch (Modification du nom des levels et de l'icone
+    option = u'TGV2ZWxOYW1lczowfDF8MnwzfDR8NXw2fDc7TGV2ZWxBY3Rpb25zOnx8fHx8fHw7U2VsZWN0b3JTdHlsZTowO0xldmVsT2ZmSGlkZGVuOmZhbHNl'
+    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(PAC_zone_component['idx_away_duration'])+'&name='+nom_switch+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
+
+    # Switch selecteur durée dérogation :
+    nom_switch = u'Duree derog. (H) '+nom
+    PAC_zone_component[u'idx_derog_duration']= domoticz_add_virtual_device(idx,1002,nom_switch)
+    # Personnalisation du switch (Modification du nom des levels et de l'icone
+    option = u'TGV2ZWxOYW1lczowfDF8MnwzfDR8NXw2fDc7TGV2ZWxBY3Rpb25zOnx8fHx8fHw7U2VsZWN0b3JTdHlsZTowO0xldmVsT2ZmSGlkZGVuOmZhbHNl'
+    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(PAC_zone_component['idx_derog_duration'])+'&name='+nom_switch+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
+
     # Log Domoticz :
     domoticz_write_log(u"Cozytouch : creation "+nom+u" ,url: "+url)
 
@@ -1750,15 +1761,15 @@ def maj_device(data,name,p,x):
 
         # Evaluation du retour de la fonction : cas n°1, envoi vers Coytouch, avec mode manuel. On envoie les 3 paramètres pour activer le mode manuel :
         if return_switch == (1, u'manu'):
-            # Renvoi de la consigne de T°C manuel 
+            # 1-Renvoi de la consigne de T°C manuel 
             cozytouch_POST(classe.get(u'url'),u'setDerogatedTargetTemperature',domoticz_read_device_analog(classe.get(u'idx_cons_temp_manu')))
             time.sleep(0.3)
-            # Renvoi de la durée de dérogation
-            cozytouch_POST(classe.get(u'url'),u'setDerogationTime',domoticz_read_user_variable(classe.get(u'idx_cons_duree_manu')))
+            # 2-Renvoi de la durée de dérogation
+            cozytouch_POST(classe.get(u'url'),u'setDerogationTime',int (Domoticz_read_device_analog(classe.get(u'idx_derog_duration'))))
             time.sleep(0.3)
-            # Ouis activation du mode Manuel (Dérogation)
+            # 3-Puis activation du mode Manuel (Dérogation)
             cozytouch_POST(classe.get(u'url'),u'setDerogationOnOffState',u'on')
-            
+	
     ####
     # Update function : SubClass DHWP_THERM_V3_IO, DHWP_THERM_IO, DHWP_THERM_V2_MURAL_IO
 
