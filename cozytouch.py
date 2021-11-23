@@ -1237,7 +1237,7 @@ def ajout_PAC_zone_component (idx,liste,url,x,label):
     PAC_zone_component [u'idx_cons_temp_manu']= domoticz_add_virtual_device(idx,8,nom_cons_manu)
 
     # Création d'une variable utilisateur contenant la durée de temps de dérogation
-    PAC_zone_component [u'idx_cons_duree_manu']= domoticz_create_user_variable(u'Duree derogation (1 à 8h)', u'2')
+    PAC_zone_component [u'idx_cons_duree_manu']= domoticz_create_user_variable(u'Duree derogation (1 a 8h)', u'2')
     
     # Log Domoticz :
     domoticz_write_log(u"Cozytouch : creation "+nom+u" ,url: "+url)
