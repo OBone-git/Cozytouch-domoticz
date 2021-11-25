@@ -1772,7 +1772,7 @@ def maj_device(data,name,p,x):
             cozytouch_POST(classe.get(u'url'),u'setDerogatedTargetTemperature',domoticz_read_device_analog(classe.get(u'idx_cons_temp_manu')))
             time.sleep(0.3)
             # 2-Renvoi de la durée de dérogation
-            cozytouch_POST(classe.get(u'url'),u'setDerogationTime',(domoticz_read_device_switch_selector(classe.get(u'idx_derog_duration'))/10)))         
+            cozytouch_POST(classe.get(u'url'),u'setDerogationTime',(domoticz_read_device_switch_selector(classe.get(u'idx_derog_duration'))/10))         
             time.sleep(0.3)
             # 3-Puis activation du mode Manuel (Dérogation)
             cozytouch_POST(classe.get(u'url'),u'setDerogationOnOffState',u'on')
