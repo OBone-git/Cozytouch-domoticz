@@ -14,6 +14,7 @@
 
 # TODO list:
 # Prise en compte du mode dérogation sur les AtlanticElectricalHeaterWithAdjustableTemperatureSetpointIOComponent
+# Prise en compte du mode dérogation sur les AtlanticPassAPCZoneControlZoneComponent (pas testé sur l'appli Cozytouch)
 # Affichage du mode éco ou confort sur les AtlanticPassAPCZoneControlZoneComponent (en mode prog sur lez zones)
 
 # En TEST :
@@ -27,16 +28,16 @@ import requests, shelve, json, time, unicodedata, os, sys, errno
 Paramètres
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 '''
-version=5.33
+version=5.2
 
 debug=1 # 0 : pas de traces debug / 1 : traces requêtes http / 2 : dump data json reçues du serveur cozytouch
 
-domoticz_ip=u'192.168.xx.xx'
+domoticz_ip=u'192.168.x.x'
 domoticz_port=u'8080'
 
 
-login="xxxxx"
-password="xxxxx"
+login="xxxxxx"
+password="xxxx"
 
 
 
@@ -89,20 +90,12 @@ dict_cozytouch_devtypes = {}
 dict_cozytouch_devtypes['radiateur']='io:AtlanticElectricalHeaterWithAdjustableTemperatureSetpointIOComponent'
 dict_cozytouch_devtypes['chauffe eau']='io:AtlanticDomesticHotWaterProductionxxxxx' #classe désactivée
 dict_cozytouch_devtypes['module fil pilote']='io:AtlanticElectricalHeaterIOComponent'
-dict_cozytouch_devtypes['bridge cozytouch']='internal:PodMiniComponent' or 'internal:PodV3Component'
+dict_cozytouch_devtypes['bridge cozytouch']='internal:PodMiniComponent'
 dict_cozytouch_devtypes['PAC main control']='io:AtlanticPassAPCZoneControlMainComponent'
 dict_cozytouch_devtypes['PAC zone control']='io:AtlanticPassAPCZoneControlZoneComponent'
 dict_cozytouch_devtypes['DHWP_THERM_V3_IO']="io:AtlanticDomesticHotWaterProductionV3IOComponent"
 dict_cozytouch_devtypes['DHWP_THERM_IO']="io:AtlanticDomesticHotWaterProductionIOComponent"
 dict_cozytouch_devtypes['DHWP_THERM_V2_MURAL_IO']="io:AtlanticDomesticHotWaterProductionV2_MURAL_IOComponent"
-
-# TEST
-dict_cozytouch_devtypes['PAC_HeatPump']='io:AtlanticPassAPCHeatPumpMainComponent'
-dict_cozytouch_devtypes['PAC zone component']='io:AtlanticPassAPCHeatingAndCoolingZoneComponent'
-dict_cozytouch_devtypes['PAC OutsideTemp']='io:AtlanticPassAPCOutsideTemperatureSensor'
-dict_cozytouch_devtypes['PAC InsideTemp']='io:AtlanticPassAPCZoneTemperatureSensor'
-dict_cozytouch_devtypes['PAC Electrical Energy Consumption']='io:TotalElectricalEnergyConsumptionSensor'
-
 '''
 **********************************************************
 Fonctions génériques pour Domoticz
@@ -203,7 +196,7 @@ def domoticz_read_device_switch_selector(idx):
             return data[u'result'][0][u'LevelInt']
     else:
         http_error(req.status_code,req.reason) # Appel fonction sur erreur HTTP
-        return None  
+        return None
 
 def domoticz_read_user_variable(idx):
     ''' Fonction de lecture d'une variable utilisateur
@@ -215,12 +208,13 @@ def domoticz_read_user_variable(idx):
     req=requests.get(myurl)
     if debug:
         print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
+
     # Réponse HTTP 200 OK
     if req.status_code==200 :
             data=json.loads(req.text)
             # Lecture de la valeur de la variable
             # Les données sont dans un dictionnaire ( [] ) d'où le [0]
-            select=(data[u'result'][int(idx)-1][u'Value'])
+            select=(data[u'result'][0][u'Value'])
             return select
     else:
         http_error(req.status_code,req.reason) # Appel fonction sur erreur HTTP
@@ -230,8 +224,8 @@ def domoticz_create_user_variable(nom_variable, valeur_variable):
     ''' création d'une variable utilisateur dans domoticz
     renvoie l'idx créé
     '''
-	# Requete de création de variable
-    myurl=url_domoticz+'command&param=adduservariable&vname='+nom_variable+'&vtype=0&vvalue='+valeur_variable
+
+    myurl=url_domoticz+'command&param=saveuservariable&vname='+nom_variable+'&vtype=2&vvalue='+valeur_variable
     req=requests.get(myurl)
     if debug:
         print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
@@ -239,47 +233,29 @@ def domoticz_create_user_variable(nom_variable, valeur_variable):
     # Réponse HTTP 200 OK
     if req.status_code==200 :
         data=json.loads(req.text)
-	
-        # Si status de retard 'ERR' : Envoi d'une requete différente sur une version precedente de Domoticz
-        if data[u'status'] == ('ERR') :
-            myurl=url_domoticz+'command&param=saveuservariable&vname='+nom_variable+'&vtype=0&vvalue='+valeur_variable
-            req=requests.get(myurl)
-            data=json.loads(req.text)
-            if debug:
-                    print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
-            # Variable créée 
-            if data[u'status'] == ('OK'):
-                myurl=url_domoticz+'command&param=getuservariables'
-                req=requests.get(myurl)
-                if debug:
-                    print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
-                # Réponse HTTP 200 OK
-                if req.status_code==200 :
-                    data=json.loads(req.text)
-                    # Sauvegarde idx
-                    for a in data[u'result']:
-                        if a[u'Name'] == nom_variable:
-                            idx = a[u'idx']
-                            return idx
-            else : print("!!!! Echec creation variable domoticz "+nom_variable)
-            
-        # Variable existante
+
         if data[u'status'] == ('Variable name already exists!') or ('OK'):
+
             myurl=url_domoticz+'command&param=getuservariables'
             req=requests.get(myurl)
             if debug:
                 print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
+
             # Réponse HTTP 200 OK
             if req.status_code==200 :
                 data=json.loads(req.text)
-                # Sauvegarde idx
                 for a in data[u'result']:
                     if a[u'Name'] == nom_variable:
                         idx = a[u'idx']
-                        return idx
+                return idx
+            else:
+                http_error(req.status_code,req.reason) # Appel fonction sur erreur HTTP
         else:
             print("!!!! Echec creation variable domoticz "+nom_variable)
-        return None
+    else:
+        http_error(req.status_code,req.reason) # Appel fonction sur erreur HTTP
+
+    return None
 
 def domoticz_rename_device(idx, nom):
     ''' renomme un device dans domoticz
@@ -457,7 +433,7 @@ def cozytouch_POST(url_device,name,parametre):
     if isinstance (parametre,int) or isinstance (parametre,float):
         parametre = str(parametre).decode("utf-8")
     # si unicode, on teste si c'est un objet JSON '{}' dans ce cas on ne met pas de double quotes, sinon on applique par défaut
-    elif isinstance (parametre,unicode) or isinstance (parametre,str)  and parametre.find('{') == -1 :
+    elif isinstance (parametre,unicode) and parametre.find('{') == -1 :
         parametre = u'"'+parametre+u'"'
 
     # Headers HTTP
@@ -677,26 +653,6 @@ def decouverte_devices():
             elif name == dict_cozytouch_devtypes.get(u'bridge cozytouch'):
                 label = u'localisation inconnue'
                 liste= ajout_bridge_cozytouch (save_idx,liste,url,x,label)
-                p+=1
-
-            elif name == dict_cozytouch_devtypes.get(u'PAC_HeatPump'):
-                liste= ajout_PAC_HeatPump (save_idx,liste,url,x,read_label_from_cozytouch(data,x))
-                p+=1
-
-            elif name == dict_cozytouch_devtypes.get(u'PAC OutsideTemp'):
-                liste= ajout_PAC_Outside_Temp (save_idx,liste,url,x,read_label_from_cozytouch(data,x))
-                p+=1
-
-            elif name == dict_cozytouch_devtypes.get(u'PAC InsideTemp'):
-                liste= ajout_PAC_Inside_Temp (save_idx,liste,url,x,read_label_from_cozytouch(data,x))
-                p+=1
-
-            elif name == dict_cozytouch_devtypes.get(u'PAC Electrical Energy Consumption'):
-                liste= ajout_PAC_Electrical_Energy (save_idx,liste,url,x,read_label_from_cozytouch(data,x))
-                p+=1
-
-            elif name == dict_cozytouch_devtypes.get(u'PAC zone component'):
-                liste= ajout_PAC_zone_component (save_idx,liste,url,x,read_label_from_cozytouch(data,x))
                 p+=1
 
             else :
@@ -1040,9 +996,7 @@ def Add_DHWP_THERM (idx,liste,url,x,label,name):
     # Consigne température  :
     nom_cons_conf = u'Consigne Temp '+nom
     DHWP_THERM[u'idx_cons_temp']= domoticz_add_virtual_device(idx,8,nom_cons_conf )
-    # Création Compteur d'énergie :
-    nom_compteur= u'Conso '+nom
-    radiateur[u'idx_compteur']= domoticz_add_virtual_device(idx,113,nom_compteur)
+
     # Switch selecteur :
     nom_switch = u'Mode '+nom
     DHWP_THERM[u'idx_switch_mode']= domoticz_add_virtual_device(idx,1002,nom)
@@ -1096,169 +1050,6 @@ def Add_DHWP_THERM (idx,liste,url,x,label,name):
     print ("Ajout: "+nom)
     return liste
 
-def ajout_PAC_HeatPump  (idx,liste,url,x,label):
-    ''' Fonction ajout PAC HeatPump (controle général)
-    '''
-    # création du nom suivant la position JSON du device dans l'API Cozytouch
-    nom = u'PAC '+label
-
-    # création du dictionnaire de définition du device
-    PAC_HeatPump = {}
-    PAC_HeatPump [u'url'] = url
-    PAC_HeatPump[u'x']= x
-    PAC_HeatPump[u'nom']= nom
-
-    # Switch selecteur stop/heating/cooling/drying/auto
-    nom_switch = u'Mode PAC '+label
-    PAC_HeatPump [u'idx_switch_mode']= domoticz_add_virtual_device(idx,1002,nom)
-    # Personnalisation du switch (Modification du nom des levels et de l'icone)
-    option = u'TGV2ZWxOYW1lczpPZmZ8Q2hhdWZmYWdlfFJlZnJvaWRpc3NlbWVudHxEw6lzaHVtaWRpZmljYXRldXJ8QXV0bztMZXZlbEFjdGlvbnM6fHx8fDtTZWxlY3RvclN0eWxlOjE7TGV2ZWxPZmZIaWRkZW46ZmFsc2U%3D&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true'
-    myurl=u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?type=setused&idx='+(PAC_HeatPump[u'idx_switch_mode'])+u'&name='+nom_switch+u'&description=&strparam1=&strparam2=&protected=false&switchtype=18&customimage=7&used=true&addjvalue=0&addjvalue2=0&options='+option
-    req=requests.get(myurl)
-    if debug:
-        print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
-    
-    # Log Domoticz :
-    domoticz_write_log(u"Cozytouch : creation "+nom+u" ,url: "+url)
-
-    # ajout du dictionnaire dans la liste des device:
-    liste.append(PAC_HeatPump)
-
-    print(u"Ajout: "+nom)
-    return liste
-
-def ajout_PAC_Outside_Temp (idx,liste,url,x,label):
-    ''' Fonction ajout T°C Extérieure PAC
-    '''
-    # création du nom 
-    nom = u'Outside T°C'
-	
-    # création du dictionnaire de définition du device
-    PAC_Outside_Temp = {}
-    PAC_Outside_Temp [u'url'] = url
-    PAC_Outside_Temp [u'x']= x
-    PAC_Outside_Temp [u'nom']= nom
-
-    # Création Mesure température Extérieur :
-    PAC_Outside_Temp [u'idx_mesure_temp']= domoticz_add_virtual_device(idx,80,nom)
-
-    # Log Domoticz :
-    domoticz_write_log(u"Cozytouch : creation "+nom+u" ,url: "+url)
-
-    # ajout du dictionnaire dans la liste des device:
-    liste.append(PAC_Outside_Temp)
-
-    #print(u"Ajout: "+nom.encode('utf-8'))
-    return liste
-
-def ajout_PAC_Inside_Temp (idx,liste,url,x,label):
-    ''' Fonction ajout T°C Intérieure PAC
-    '''
-    # création du nom 
-    nom = u'Inside T°C'
-    
-    # création du dictionnaire de définition du device
-    PAC_Inside_Temp = {}
-    PAC_Inside_Temp [u'url'] = url
-    PAC_Inside_Temp [u'x']= x
-    PAC_Inside_Temp [u'nom']= nom
-
-    # Création Mesure température Extérieur :
-    PAC_Inside_Temp [u'idx_mesure_temp']= domoticz_add_virtual_device(idx,80,nom)
-
-    # Log Domoticz :
-    domoticz_write_log(u"Cozytouch : creation "+nom+u" ,url: "+url)
-
-    # ajout du dictionnaire dans la liste des device:
-    liste.append(PAC_Inside_Temp)
-    return liste
-
-def ajout_PAC_Electrical_Energy (idx,liste,url,x,label):
-    ''' Fonction ajout Compteurs energies 1 + 2
-    '''
-    # création du nom 
-    nom = u'Compteurs Energie'
-    
-    # création du dictionnaire de définition du device
-    PAC_Electrical_Energy = {}
-    PAC_Electrical_Energy [u'url'] = url
-    PAC_Electrical_Energy [u'x']= x
-    PAC_Electrical_Energy [u'nom']= nom
-
-    # Création Compteur d'énergie 1 :
-    nom_compteur= u'Energy 1'
-    PAC_Electrical_Energy [u'idx_compteur_1']= domoticz_add_virtual_device(idx,113,nom_compteur)
-
-    # Création Compteur d'énergie 2 :
-    nom_compteur= u'Energy 2'
-    PAC_Electrical_Energy [u'idx_compteur_2']= domoticz_add_virtual_device(idx,113,nom_compteur)
-    
-    # Log Domoticz :
-    domoticz_write_log(u"Cozytouch : creation "+nom+u" ,url: "+url)
-
-    # ajout du dictionnaire dans la liste des device:
-    liste.append(PAC_Electrical_Energy)
-    print(u"Ajout: "+nom)
-    return liste
-
-def ajout_PAC_zone_component (idx,liste,url,x,label):
-    ''' Fonction ajout PAC (controle zone)
-    '''
-    # Création du nom suivant la position JSON du device dans l'API Cozytouch
-    nom = u'PAC '+label
-
-    # Création du dictionnaire de définition du device
-    PAC_zone_component = {}
-    PAC_zone_component  [u'url'] = url
-    PAC_zone_component  [u'x']= x
-    PAC_zone_component  [u'nom']= nom
-
-    # Création Mode de fonctionnement PAC : Switch selecteur off/manu/programmation
-    nom_switch = u'Mode PAC '+label
-    nom_switch = nom_switch.encode('utf8')
-    PAC_zone_component [u'idx_switch_mode']= domoticz_add_virtual_device(idx,1002,nom)
-    # Personnalisation du switch (Modification du nom des levels et de l'icone)
-    option = u'TGV2ZWxOYW1lczpPZmZ8TWFudWVsfEF1dG8gKFByb2cpO0xldmVsQWN0aW9uczp8fDtTZWxlY3RvclN0eWxlOjA7TGV2ZWxPZmZIaWRkZW46ZmFsc2U%3D'
-    myurl=u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?type=setused&idx='+(PAC_zone_component[u'idx_switch_mode'])+u'&name='+nom_switch+u'&description=&strparam1=&strparam2=&protected=false&switchtype=18&customimage=7&used=true&addjvalue=0&addjvalue2=0&options='+option
-    req=requests.get(myurl)
-    if debug:
-        print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
-
-    # Consigne température Confort en mode chauffage : (core:ComfortHeatingTargetTemperatureState)
-    nom_cons_conf_chauffage = u'Confort chauff. '+nom
-    PAC_zone_component [u'idx_cons_temp_confort_chauffage'] = domoticz_add_virtual_device(idx,8,nom_cons_conf_chauffage)
-
-    # Consigne température Eco mode chauffage :
-    nom_cons_eco_chauffage = u'Eco chauff. '+nom
-    PAC_zone_component [u'idx_cons_temp_eco_chauffage']= domoticz_add_virtual_device(idx,8,nom_cons_eco_chauffage)
-
-     # Consigne température mode manuel :
-    nom_cons_manu = u'Manuel '+nom
-    PAC_zone_component [u'idx_cons_temp_manu']= domoticz_add_virtual_device(idx,8,nom_cons_manu)
-
-    # Switch selecteur durée absence :
-    nom_switch = u'Duree absence (jours) '+nom
-    PAC_zone_component[u'idx_away_duration']= domoticz_add_virtual_device(idx,1002,nom_switch)
-    # Personnalisation du switch (Modification du nom des levels et de l'icone
-    option = u'TGV2ZWxOYW1lczowfDF8MnwzfDR8NXw2fDc7TGV2ZWxBY3Rpb25zOnx8fHx8fHw7U2VsZWN0b3JTdHlsZTowO0xldmVsT2ZmSGlkZGVuOmZhbHNl'
-    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(PAC_zone_component['idx_away_duration'])+'&name='+nom_switch+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
-
-    # Switch selecteur durée dérogation :
-    nom_switch = u'Duree derog. (H) '+nom
-    PAC_zone_component[u'idx_derog_duration']= domoticz_add_virtual_device(idx,1002,nom_switch)
-    # Personnalisation du switch (Modification du nom des levels et de l'icone
-    option = u'TGV2ZWxOYW1lczowfDF8MnwzfDR8NXw2fDd8ODtMZXZlbEFjdGlvbnM6fHx8fHx8fHw7U2VsZWN0b3JTdHlsZTowO0xldmVsT2ZmSGlkZGVuOmZhbHNl'
-    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(PAC_zone_component['idx_derog_duration'])+'&name='+nom_switch+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
-
-    # Log Domoticz :
-    domoticz_write_log(u"Cozytouch : creation "+nom+u" ,url: "+url)
-
-    # ajout du dictionnaire dans la liste des device:
-    liste.append(PAC_zone_component)
-
-    print(u"Ajout: "+nom)
-    return liste
-
 def ajout_bridge_cozytouch(idx,liste,url,x,label):
     nom = u'Bridge Cozytouch '+label
 
@@ -1274,7 +1065,7 @@ Fonction de comparaison de consigne pour maj Domoticz
 **********************************************************
 '''
 
-def gestion_consigne(texte,url_device,nom_device, idx_cons_domoticz, cons_device,cde_name,cons_device_abais_eco=0,cons_domoticz_confort=0,arrondi = True):
+def gestion_consigne(texte,url_device,nom_device, idx_cons_domoticz, cons_device,cde_name,cons_device_abais_eco=0,cons_domoticz_confort=0):
     ''' Compare les consignes de domoticz ancienne / actuelle / ainsi que celle du device
     pour déterminer qui demande un changement de consigne
     envoi le changement de consigne au device ou à Domoticz et inscrit un log
@@ -1294,13 +1085,12 @@ def gestion_consigne(texte,url_device,nom_device, idx_cons_domoticz, cons_device
     # si la partie décimale est égale à 0,5 on accepte, sinon on arrondit
     cons_domoticz = domoticz_read_device_analog(idx_cons_domoticz)
 
-    if arrondi :
-        e = int(cons_domoticz)
-        e = cons_domoticz - e
-            # si la partie décimale est différente de 0,5°C on arrondit
-        if e != 0.5:
-            cons_domoticz = round(cons_domoticz)
+    e = int(cons_domoticz)
+    e = cons_domoticz - e
 
+    # si la partie décimale est différente de 0,5°C on arrondit
+    if e != 0.5:
+        cons_domoticz = round(cons_domoticz)
 
     # comparaison avec la consigne en cours
     if cons_device != cons_domoticz and cons_domoticz != cons_domoticz_prec and cons_domoticz_prec > 0:
@@ -1352,10 +1142,9 @@ def gestion_consigne(texte,url_device,nom_device, idx_cons_domoticz, cons_device
 def gestion_switch_selector_domoticz (cozytouch_mode_actual, url_device, nom_device, idx_switch_domoticz,state_cozytouch_on_off='no',
                                                  command_off_activate= False,setting_command_on_off=u'setOperatingMode',setting_parameter_off=u'standby',
                                                  command_on_activate = False, setting_parameter_on='on',
-                                                 command_manual_activate = False, manual_level=10,setting_command_manual=u'setDerogatedMode', setting_parameter_manual_on=u'on',setting_parameter_manual_off=u'off',
-                                                 level_0=u'0',level_10=u'10',level_20=u'20',level_30=u'30',level_40=u'40',level_50=u'50', level_60=u'60',level_70=u'70',level_80=u'80',setting_command_mode=u'setting_mode',
+                                                 level_0=u'0',level_10=u'10',level_20=u'20',level_30=u'30',level_40=u'40',level_50=u'50', level_60=u'60',level_70=u'70',setting_command_mode=u'setting_mode',
                                                  command_activate=True):
-    
+
     # Comparaison avec l'état précédent pour mettre à jour uniquement sur changement (évite de remplir les logs inutilement)
     # Lecture de l'état précédent du level du switch de domoticz :
     domoticz_switch_actual = domoticz_read_device_switch_selector(idx_switch_domoticz)
@@ -1382,9 +1171,7 @@ def gestion_switch_selector_domoticz (cozytouch_mode_actual, url_device, nom_dev
         domoticz_mode_actual = level_60
     if domoticz_switch_actual == 70:
         domoticz_mode_actual = level_70
-    if domoticz_switch_actual == 80:
-        domoticz_mode_actual = level_80
-        
+
     if command_off_activate and state_cozytouch_on_off == setting_parameter_off : # Device à OFF : Si état lu de cozytouch = état  OFF
         cozytouch_mode_actual = level_0
         domoticz_switch_state_to_send = 0
@@ -1405,8 +1192,6 @@ def gestion_switch_selector_domoticz (cozytouch_mode_actual, url_device, nom_dev
             domoticz_switch_state_to_send = 60
         if cozytouch_mode_actual == level_70 :
             domoticz_switch_state_to_send = 70
-        if cozytouch_mode_actual == level_80 :
-            domoticz_switch_state_to_send = 80
 
     if debug:
         print("Etat actuel du switch Domoticz: "+str(domoticz_switch_actual))
@@ -1417,7 +1202,7 @@ def gestion_switch_selector_domoticz (cozytouch_mode_actual, url_device, nom_dev
     # Comparaison du mode en cours de cozytouch et du mode en cours de domoticz
     if cozytouch_mode_actual != domoticz_mode_actual and domoticz_mode_old != 'init':
         # Cas 1 : Comparaison du mode en cours de domoticz avec le mode précédent en mémoire, si différent :
-        # le changement de mode vient de domoticz, on envoie le nouveau mode àv cozytouch
+        # le changement de mode vient de domoticz, on envoie le nouveau mode à cozytouch
         if domoticz_mode_actual != domoticz_mode_old :
             if debug:
                 print("Cas 1 : changement vient de domoticz, envoie du mode à cozytouch")
@@ -1431,16 +1216,6 @@ def gestion_switch_selector_domoticz (cozytouch_mode_actual, url_device, nom_dev
                 elif command_on_activate :
                     cozytouch_POST(url_device,setting_command_on_off,setting_parameter_on)
 
-            # Options de commandes Manuel :
-            if command_manual_activate :
-                #Envoi de la commande 'Dérogation : on'. Sortie de la fonction avec valeur de retour pour traitement hors fonction des commandes à envoyer.
-                if domoticz_switch_actual == manual_level :
-                    domoticz_write_log('Cozytouch - '+nom_device+' : nouveau mode transmis: '+str(domoticz_mode_actual))
-                    var_save(domoticz_mode_actual, ('save_'+str(idx_switch_domoticz)))
-                
-                else : #Envoi de la commande 'Dérogation : off'
-                    cozytouch_POST(url_device,setting_command_manual,setting_parameter_manual_off)
-                
             #Envoi de la commande par défaut
             if command_activate :
                 cozytouch_POST(url_device,setting_command_mode,domoticz_mode_actual)
@@ -1473,7 +1248,7 @@ def gestion_switch_selector_domoticz (cozytouch_mode_actual, url_device, nom_dev
             print("Cas 3 : aucun changement de mode, aucune action")
         return (3,cozytouch_mode_actual)
 
-    
+
 def value_by_name(data,device,item):
     for state in data['setup']['devices'][device]['states']:
         if state['name'] == item:
@@ -1482,31 +1257,43 @@ def value_by_name(data,device,item):
     return None
 
 
+
+
+
+
+
+
 def maj_device(data,name,p,x):
 
     ''' Fonction de mise à jour du device dans Domoticz
     '''
 
-    print("Mise a jour device "+str(p)+" : "+name +" /x: "+ str(x))
+    print("Mise a jour device "+str(p)+" : "+name)
+
     a = var_restore('save_devices')
     classe = a[p]
-    
+
     ''' Mise à jour : Données radiateur
     '''
+
     if name == dict_cozytouch_devtypes.get(u'module fil pilote') or  name == dict_cozytouch_devtypes.get(u'radiateur') :
+
         # Switch selecteur mode OFF / Manuel / Auto
         gestion_switch_selector_domoticz ((value_by_name(data,x,u'io:TargetHeatingLevelState')),classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_switch_level'),
                                                          state_cozytouch_on_off=((value_by_name(data,x,u'core:OperatingModeState'))), command_off_activate = True,
                                                          level_0=u'off',level_10=u'frostprotection',level_20=u'eco',level_30=u'comfort-2',level_40=u'comfort-1',level_50=u'comfort',setting_command_mode=u'setHeatingLevel')
 
     if name == dict_cozytouch_devtypes.get(u'radiateur') :
+
         # Switch selecteur mode ordre radiateur OFF / Hors gel / Eco / Confort -2 / Confort -2 / Confort
         # pas d'écriture possible depuis domoticz pour un radiateur connecté, l'ordre est imposé par le fil pilote ou le mode de programmation interne de l'appareil
 
-        # Lecture de l'ordre en cours sur le radiateur :
+        # Lecture de l'ordre en cours sur le raditateur :
         ordre_radiateur = (value_by_name(data,x,u'io:TargetHeatingLevelState'))
+        print ordre_radiateur
         #Lecture de l'état de fonctionnement du radiateur :
         mode_radiateur=(value_by_name(data,x,u'core:OperatingModeState'))
+        print mode_radiateur
 
         # Switch selecteur mode OFF / Manuel / Auto
         gestion_switch_selector_domoticz (value_by_name(data,x,u'core:OperatingModeState'),classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_switch_mode'),
@@ -1621,7 +1408,7 @@ def maj_device(data,name,p,x):
         if mode_PAC == u'heating' :
             # Gestion consigne en mode manuel : Seeting consigne en mode 'heating'
             setting_consigne_zone = u'setHeatingTargetTemperature'
-            # Gestion switch sélecteur : Prise en compte du mode de fonctionnement de la  zone control 
+            # Gestion switch sélecteur : Prise en compte du mode de fonctionnement de la  zone control suivant le paramètre de fonctionnement en mode 'heating'
             state_mode_zone = value_by_name(data,x,u'io:PassAPCHeatingModeState')
             # Gestion switch sélecteur : Setting mode en mode 'heating'
             setting_command_mode_zone  = u'setPassAPCHeatingMode'
@@ -1647,7 +1434,7 @@ def maj_device(data,name,p,x):
             # On renvoi dans tous les cas de changement de mode vers Cozytouch la consigne manuel
             if return_switch == 1 :
                 # Renvoi de la consigne de T°C manuel lors d'une changement de mode vers manuel (sinon sans cela, la consigne passe à 8°C, mystère Cozytouch)
-                cozytouch_POST(classe.get(u'url'),setting_consigne_zone, domoticz_read_device_analog(classe.get(u'idx_cons_temp_manu')))
+                cozytouch_POST(classe.get(u'url'),setting_consigne_zone,+domoticz_read_device_analog(classe.get(u'idx_cons_temp_manu')))
 
         # Si zone Control en mode 'Cooling' :
         elif mode_PAC == u'cooling':
@@ -1683,100 +1470,13 @@ def maj_device(data,name,p,x):
 
         # Si zone control en 'stop' : on force l'affichage des zones en 'off''
         elif mode_PAC == u'stop' :
+
             # Gestion switch sélecteur :
             gestion_switch_selector_domoticz (state_mode_zone ,classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_switch_mode'),
                                                          state_cozytouch_on_off = u'stop', # force une lecture d'un état OFF
                                                          level_0=u'stop',level_10=u'manu',level_20=u'internalScheduling')
 
-    ''' Mise à jour : Données PAC HeatPump
-    '''
-    if name == dict_cozytouch_devtypes.get(u'PAC_HeatPump'):
-        # MAJ données générales PAC
-        # Gestion du sélecteur :
-        gestion_switch_selector_domoticz (value_by_name(data,x,u'io:PassAPCOperatingModeState'),classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_switch_mode'),
-                                                     level_0='stop',level_10='heating',level_20='cooling',level_30='drying',level_40='auto',setting_command_mode='setPassAPCOperatingMode',
-                                                     command_activate=True)
-        
-    ''' Mise à jour : Mesure T°C Exterieure PAC
-    '''
-    if name == dict_cozytouch_devtypes.get(u'PAC OutsideTemp') :
-        # Mesure température extérieure :
-        domoticz_write_device_analog(value_by_name(data,x,u'core:TemperatureState'),classe.get(u'idx_mesure_temp'))
 
-    ''' Mise à jour : Mesure T°C Interieure PAC
-    '''
-    if name == dict_cozytouch_devtypes.get(u'PAC InsideTemp') :
-        # Mesure température intérieure :
-        domoticz_write_device_analog(value_by_name(data,x,u'core:TemperatureState'),classe.get(u'idx_mesure_temp'))
-
-    ''' Mise à jour : Compteurs Energie
-    '''
-    if name == dict_cozytouch_devtypes.get(u'PAC Electrical Energy Consumption') :
-        # Compteur d'énergie 1 :
-        domoticz_write_device_analog((value_by_name(data,x,u'core:ConsumptionTariff1State')),(classe.get(u'idx_compteur_1')))
-        # Compteur d'énergie 2 :
-        domoticz_write_device_analog((value_by_name(data,x,u'core:ConsumptionTariff2State')),(classe.get(u'idx_compteur_2')))
-
-    ''' Mise à jour : Données PAC Zone Component
-    '''
-    if name == dict_cozytouch_devtypes.get(u'PAC zone component') :
-
-        # Consigne température Confort en mode chauffage en mode programmation : (core:ComfortHeatingTargetTemperatureState)
-        gestion_consigne(u'Confort chauff.',classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_cons_temp_confort_chauffage'),value_by_name(data,x,u'core:ComfortHeatingTargetTemperatureState'),(u'setComfortHeatingTargetTemperature'), arrondi = False)
-        
-        # Consigne température Eco mode chauffage en mode programmation : (core:EcoHeatingTargetTemperatureState)
-        gestion_consigne(u'Eco chauff.',classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_cons_temp_eco_chauffage'),value_by_name(data,x,u'core:EcoHeatingTargetTemperatureState'),(u'setEcoHeatingTargetTemperature'))
-                
-        # Gestion de la consigne manuel 
-        gestion_consigne(u'Manuel',classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_cons_temp_manu'),value_by_name(data,x,u'core:DerogatedTargetTemperatureState'),(u'setDerogatedTargetTemperature' ))
-        '''
-        # Switch selecteur durée de dérogation
-        gestion_switch_selector_domoticz (value_by_name(data,x,u'io:DerogationRemainingTimeState'),classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_derog_duration'),
-                                                    level_0=0, level_10=1, level_20=2, level_30=3, level_40=4, level_50=5, level_60=6,level_70=7,level_80=8,setting_command_mode=u'setDerogationTime')
-                                                    '''
-        
-        # Gestion switch sélecteur : Prise en compte du mode de fonctionnement de la zone 
-        state_mode_zone = value_by_name(data,x,u'io:PassAPCHeatingModeState')
-        #print (u'state_mode_zone :' + str(state_mode_zone))
-        # Gestion switch sélecteur : Setting mode en mode 'heating'
-        setting_command_mode_zone  = u'setPassAPCHeatingMode'
-        #print (u'setting_command_mode_zone :' + str(setting_command_mode_zone))
-        # Gestion switch sélecteur : Setting mode 'off'
-        setting_command_on_off_mode_zone = u'setHeatingOnOffState'
-        #print (u'setting_command_on_off_mode_zone :' + str(setting_command_on_off_mode_zone))
-        # Gestion switch sélecteur : Prise en compte de l'état de la zone (manu, comfort, eco...)
-        state_zone = value_by_name(data,x,u'io:PassAPCHeatingProfileState')
-        #print (u'state_zone:' + str(state_zone))
-        # Gestion switch sélecteur : Prise en compte du mode de fonctionnement "Derogation" (on/off)
-        state_derog_zone = value_by_name(data,x,u'core:DerogationOnOffState')
-        #print (u'state_derog_zone :' + str(state_derog_zone))
-        # Forcage de l'état Dérogation pour le sélecteur
-        if state_derog_zone == u'on' :
-            state_mode_zone = u'manu'
-            
-        # Gestion switch sélecteur : Prise en compte de l'état on/off de la zone
-        state_on_off_zone = value_by_name(data,x,u'core:HeatingOnOffState')
-        
-        # Gestion switch sélecteur :
-        return_switch = gestion_switch_selector_domoticz (state_mode_zone ,classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_switch_mode'),
-                                                     state_cozytouch_on_off = state_on_off_zone,
-                                                     command_off_activate=False, setting_command_on_off=setting_command_on_off_mode_zone, setting_parameter_off=u'off',
-                                                     command_on_activate=False, setting_parameter_on=u'on',
-                                                     command_manual_activate = True, setting_command_manual=u'setDerogationOnOffState', setting_parameter_manual_on=u'on', setting_parameter_manual_off=u'off',
-                                                     level_0=u'stop',level_10=u'manu',level_20=u'internalScheduling',setting_command_mode=setting_command_mode_zone,
-                                                     command_activate=False)
-
-        # Evaluation du retour de la fonction : cas n°1, envoi vers Coytouch, avec mode manuel. On envoie les 3 paramètres pour activer le mode manuel :
-        if return_switch == (1, u'manu'):
-            # 1-Renvoi de la consigne de T°C manuel 
-            cozytouch_POST(classe.get(u'url'),u'setDerogatedTargetTemperature',domoticz_read_device_analog(classe.get(u'idx_cons_temp_manu')))
-            time.sleep(0.3)
-            # 2-Renvoi de la durée de dérogation
-            cozytouch_POST(classe.get(u'url'),u'setDerogationTime',(domoticz_read_device_switch_selector(classe.get(u'idx_derog_duration'))/10))         
-            time.sleep(0.3)
-            # 3-Puis activation du mode Manuel (Dérogation)
-            cozytouch_POST(classe.get(u'url'),u'setDerogationOnOffState',u'on')
-	
     ####
     # Update function : SubClass DHWP_THERM_V3_IO, DHWP_THERM_IO, DHWP_THERM_V2_MURAL_IO
 
