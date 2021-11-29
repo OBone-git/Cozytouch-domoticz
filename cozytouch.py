@@ -1897,7 +1897,7 @@ def maj_device(data,name,p,x):
     if name == dict_cozytouch_devtypes.get(u'Water_Heater_2') :
 		
 		# Temperature measurement
-		domoticz_write_device_analog((value_by_name(data,x,u'io:MiddleWaterTemperatureState')),(classe.get(u'idx_temp_measurement')))
+		domoticz_write_device_analog((value_by_name(data,x,u'modbuslink:MiddleWaterTemperatureState')),(classe.get(u'idx_temp_measurement')))
 
         # Water volume estimation
         domoticz_write_device_analog((value_by_name(data,x,u'core:V40WaterVolumeEstimationState')),(classe.get(u'idx_water_estimation')))
