@@ -1041,7 +1041,7 @@ def Add_DHWP_THERM (idx,liste,url,x,label,name):
     DHWP_THERM[u'idx_cons_temp']= domoticz_add_virtual_device(idx,8,nom_cons_conf )
     # Création Compteur d'énergie :
     nom_compteur= u'Conso '+nom
-    radiateur[u'idx_compteur']= domoticz_add_virtual_device(idx,113,nom_compteur)
+    DHWP_THERM[u'idx_compteur']= domoticz_add_virtual_device(idx,113,nom_compteur)
     # Switch selecteur :
     nom_switch = u'Mode '+nom
     DHWP_THERM[u'idx_switch_mode']= domoticz_add_virtual_device(idx,1002,nom)
