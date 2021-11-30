@@ -101,7 +101,7 @@ dict_cozytouch_devtypes['PAC zone component']='io:AtlanticPassAPCHeatingAndCooli
 dict_cozytouch_devtypes['PAC OutsideTemp']='io:AtlanticPassAPCOutsideTemperatureSensor'
 dict_cozytouch_devtypes['PAC InsideTemp']='io:AtlanticPassAPCZoneTemperatureSensor'
 dict_cozytouch_devtypes['PAC Electrical Energy Consumption']='io:TotalElectricalEnergyConsumptionSensor'
-
+dict_cozytouch_devtypes['Water_Heater_2']='modbuslink:AtlanticDomesticHotWaterProductionMBLComponent'
 '''
 **********************************************************
 Fonctions génériques pour Domoticz
@@ -697,7 +697,11 @@ def decouverte_devices():
             elif name == dict_cozytouch_devtypes.get(u'PAC zone component'):
                 liste= ajout_PAC_zone_component (save_idx,liste,url,x,read_label_from_cozytouch(data,x))
                 p+=1
-
+				
+			elif name == dict_cozytouch_devtypes.get(u'Water_Heater_2'):
+                liste= add_Water_Heater_2 (save_idx,liste,url,x,read_label_from_cozytouch(data,x))
+                p+=1
+				
             else :
                 domoticz_write_log(u'Cozytouch : Device avec classe '+name+u' inconnu')
 
@@ -1257,6 +1261,39 @@ def ajout_PAC_zone_component (idx,liste,url,x,label):
 
     print(u"Ajout: "+nom)
     return liste
+
+def add_Water_Heater_2 (idx,liste,url,x,label):
+    ''' Add Water Heater type 2
+    '''
+    # Création du nom suivant la position JSON du device dans l'API Cozytouch
+    nom = u'Water Heater '+label
+	
+	# Création du dictionnaire de définition du device
+    Water_Heater_2 = {}
+    Water_Heater_2 [u'url'] = url
+    Water_Heater_2 [u'x']= x
+    Water_Heater_2 [u'nom']= nom
+
+    # Add Temperature of water
+    widget_name = u'Temp '+nom
+    Water_Heater_2 [u'idx_temp_measurement']= domoticz_add_virtual_device(idx,80,widget_name)
+	
+    # Add Water volume estimation
+    # V40 is measured in litres (L) and shows the amount of warm (mixed) water with a temperature of 40℃, which can be drained from a switched off electric water heater
+    widget_name = u'Estimated volume at 40 deg '+nom
+    Water_Heater_2[u'idx_water_estimation']= domoticz_add_virtual_device(idx,113,widget_name)
+    # Personnalisation du compteur
+    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?addjvalue=0&addjvalue2=0&customimage=2&description=&idx='+(Water_Heater_2['idx_water_estimation'])+'&name='+widget_name+'&switchtype=2&addjvalue=0&addjvalue2=0&used=true&options=')
+
+	# Log Domoticz :
+    domoticz_write_log(u"Cozytouch : creation "+nom+u" ,url: "+url)
+
+    # ajout du dictionnaire dans la liste des device:
+    liste.append(Water_Heater_2)
+
+    print(u"Ajout: "+nom)
+    return liste
+	
 
 def ajout_bridge_cozytouch(idx,liste,url,x,label):
     nom = u'Bridge Cozytouch '+label
@@ -1855,6 +1892,17 @@ def maj_device(data,name,p,x):
             # Water volume estimation  (core:V40WaterVolumeEstimationState)
             domoticz_write_device_analog((value_by_name(data,x,u'core:V40WaterVolumeEstimationState')),(classe.get(u'idx_water_estimation')))
 
+	''' Mise à jour : Water_Heater_2
+    '''
+    if name == dict_cozytouch_devtypes.get(u'Water_Heater_2') :
+		
+		# Temperature measurement
+		domoticz_write_device_analog((value_by_name(data,x,u'modbuslink:MiddleWaterTemperatureState')),(classe.get(u'idx_temp_measurement')))
+
+        # Water volume estimation
+        domoticz_write_device_analog((value_by_name(data,x,u'core:V40WaterVolumeEstimationState')),(classe.get(u'idx_water_estimation')))
+
+			
 '''
 **********************************************************
 Déroulement du script
