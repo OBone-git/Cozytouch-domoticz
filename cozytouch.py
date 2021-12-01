@@ -1489,18 +1489,24 @@ def maj_device(data,name,p,x):
     print("Mise a jour device "+str(p)+" : "+name +" /x: "+ str(x))
     a = var_restore('save_devices')
     classe = a[p]
-    
+
+
+    ''' Mise à jour : Données module fil pilote
+    '''
+    if name == dict_cozytouch_devtypes.get(u'module fil pilote') :
+        # Switch selecteur mode OFF / Manuel / Auto
+        gestion_switch_selector_domoticz ((value_by_name(data,x,u'io:TargetHeatingLevelState')),classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_switch'),
+                                                         state_cozytouch_on_off=((value_by_name(data,x,u'core:OnOffState'))), command_off_activate = True,
+                                                         level_0=u'off',level_10=u'frostprotection',level_20=u'eco',level_30=u'comfort-2',level_40=u'comfort-1',level_50=u'comfort',setting_command_mode=u'setHeatingLevel')
+        
     ''' Mise à jour : Données radiateur
     '''
-    if name == dict_cozytouch_devtypes.get(u'module fil pilote') or  name == dict_cozytouch_devtypes.get(u'radiateur') :
-        # Switch selecteur mode OFF / Manuel / Auto
-        gestion_switch_selector_domoticz ((value_by_name(data,x,u'io:TargetHeatingLevelState')),classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_switch),
-                                                         state_cozytouch_on_off=((value_by_name(data,x,u'core:OperatingModeState'))), command_off_activate = True,
-                                                         level_0=u'off',level_10=u'frostprotection',level_20=u'eco',level_30=u'comfort-2',level_40=u'comfort-1',level_50=u'comfort',setting_command_mode=u'setHeatingLevel')
-
     if name == dict_cozytouch_devtypes.get(u'radiateur') :
         # Switch selecteur mode ordre radiateur OFF / Hors gel / Eco / Confort -2 / Confort -2 / Confort
         # pas d'écriture possible depuis domoticz pour un radiateur connecté, l'ordre est imposé par le fil pilote ou le mode de programmation interne de l'appareil
+        gestion_switch_selector_domoticz ((value_by_name(data,x,u'io:TargetHeatingLevelState')),classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_switch_level'),
+                                                         state_cozytouch_on_off=((value_by_name(data,x,u'core:OnOffState'))), command_off_activate = True,
+                                                         level_0=u'off',level_10=u'frostprotection',level_20=u'eco',level_30=u'comfort-2',level_40=u'comfort-1',level_50=u'comfort',setting_command_mode=u'setHeatingLevel')
 
         # Lecture de l'ordre en cours sur le radiateur :
         ordre_radiateur = (value_by_name(data,x,u'io:TargetHeatingLevelState'))
