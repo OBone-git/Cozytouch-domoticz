@@ -1494,7 +1494,7 @@ def maj_device(data,name,p,x):
     '''
     if name == dict_cozytouch_devtypes.get(u'module fil pilote') or  name == dict_cozytouch_devtypes.get(u'radiateur') :
         # Switch selecteur mode OFF / Manuel / Auto
-        gestion_switch_selector_domoticz ((value_by_name(data,x,u'io:TargetHeatingLevelState')),classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_switch_level'),
+        gestion_switch_selector_domoticz ((value_by_name(data,x,u'io:TargetHeatingLevelState')),classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_switch),
                                                          state_cozytouch_on_off=((value_by_name(data,x,u'core:OperatingModeState'))), command_off_activate = True,
                                                          level_0=u'off',level_10=u'frostprotection',level_20=u'eco',level_30=u'comfort-2',level_40=u'comfort-1',level_50=u'comfort',setting_command_mode=u'setHeatingLevel')
 
