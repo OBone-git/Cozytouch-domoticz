@@ -831,7 +831,7 @@ def ajout_module_fil_pilote(idx,liste,url,x,label):
 
     # Création switch selecteur (level_0=off/level_10=frostprotection/level_20=eco/level_30=confort-2/level_40=confort-1/level_50=confort) :
     nom_switch = u'Mode '+nom
-    radiateur[u'idx_switch']= domoticz_add_virtual_device(idx,1002,nom)
+    module_fil_pilote[u'idx_switch']= domoticz_add_virtual_device(idx,1002,nom)
     # Personnalisation du switch(Modification du nom des levels et de l'icone)
     option = u'TGV2ZWxOYW1lczpPZmZ8SG9ycyBnZWx8RWNvfENvbmZvcnQgLTJ8Q29uZm9ydCAtMXxDb25mb3J0O0xldmVsQWN0aW9uczp8fHx8fDtTZWxlY3RvclN0eWxlOjE7TGV2ZWxPZmZIaWRkZW46ZmFsc2U%3D&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true'
     myurl=u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+module_fil_pilote[u'idx_switch']+u'&name='+nom_switch+u'+&options='+option
