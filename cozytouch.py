@@ -834,7 +834,7 @@ def ajout_module_fil_pilote(idx,liste,url,x,label):
     module_fil_pilote[u'idx_switch']= domoticz_add_virtual_device(idx,1002,nom)
     # Personnalisation du switch(Modification du nom des levels et de l'icone)
     option = u'TGV2ZWxOYW1lczpPZmZ8SG9ycyBnZWx8RWNvfENvbmZvcnQgLTJ8Q29uZm9ydCAtMXxDb25mb3J0O0xldmVsQWN0aW9uczp8fHx8fDtTZWxlY3RvclN0eWxlOjE7TGV2ZWxPZmZIaWRkZW46ZmFsc2U%3D&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true'
-    myurl=u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+module_fil_pilote[u'idx_switch']+u'&name='+nom_switch+u'+&options='+option
+    myurl=u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+radiateur[u'idx_switch']+u'&name='+nom_switch+u'+&options='+option
     req=requests.get(myurl)
     if debug:
         print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
@@ -1041,7 +1041,7 @@ def Add_DHWP_THERM (idx,liste,url,x,label,name):
     DHWP_THERM[u'idx_cons_temp']= domoticz_add_virtual_device(idx,8,nom_cons_conf )
     # Création Compteur d'énergie :
     nom_compteur= u'Conso '+nom
-    radiateur[u'idx_compteur']= domoticz_add_virtual_device(idx,113,nom_compteur)
+    DHWP_THERM[u'idx_compteur']= domoticz_add_virtual_device(idx,113,nom_compteur)
     # Switch selecteur :
     nom_switch = u'Mode '+nom
     DHWP_THERM[u'idx_switch_mode']= domoticz_add_virtual_device(idx,1002,nom)
