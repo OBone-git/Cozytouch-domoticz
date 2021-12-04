@@ -101,7 +101,7 @@ dict_cozytouch_devtypes['PAC zone component']='io:AtlanticPassAPCHeatingAndCooli
 dict_cozytouch_devtypes['PAC OutsideTemp']='io:AtlanticPassAPCOutsideTemperatureSensor'
 dict_cozytouch_devtypes['PAC InsideTemp']='io:AtlanticPassAPCZoneTemperatureSensor'
 dict_cozytouch_devtypes['PAC Electrical Energy Consumption']='io:TotalElectricalEnergyConsumptionSensor'
-dict_cozytouch_devtypes['Water_Heater_2']='modbuslink:AtlanticDomesticHotWaterProductionMBLComponent'
+dict_cozytouch_devtypes['DHWP_MBL']='modbuslink:AtlanticDomesticHotWaterProductionMBLComponent'
 '''
 **********************************************************
 Fonctions génériques pour Domoticz
@@ -698,8 +698,8 @@ def decouverte_devices():
                 liste= ajout_PAC_zone_component (save_idx,liste,url,x,read_label_from_cozytouch(data,x))
                 p+=1
 				
-			elif name == dict_cozytouch_devtypes.get(u'Water_Heater_2'):
-                liste= add_Water_Heater_2 (save_idx,liste,url,x,read_label_from_cozytouch(data,x))
+            elif name == dict_cozytouch_devtypes.get(u'DHWP_MBL'):
+                liste= add_DHWP_MBL (save_idx,liste,url,x,read_label_from_cozytouch(data,x))
                 p+=1
 				
             else :
@@ -1045,7 +1045,7 @@ def Add_DHWP_THERM (idx,liste,url,x,label,name):
     DHWP_THERM[u'idx_cons_temp']= domoticz_add_virtual_device(idx,8,nom_cons_conf )
     # Création Compteur d'énergie :
     nom_compteur= u'Conso '+nom
-    radiateur[u'idx_compteur']= domoticz_add_virtual_device(idx,113,nom_compteur)
+    DHWP_THERM[u'idx_compteur']= domoticz_add_virtual_device(idx,113,nom_compteur)
     # Switch selecteur :
     nom_switch = u'Mode '+nom
     DHWP_THERM[u'idx_switch_mode']= domoticz_add_virtual_device(idx,1002,nom)
@@ -1262,34 +1262,59 @@ def ajout_PAC_zone_component (idx,liste,url,x,label):
     print(u"Ajout: "+nom)
     return liste
 
-def add_Water_Heater_2 (idx,liste,url,x,label):
-    ''' Add Water Heater type 2
+def add_DHWP_MBL (idx,liste,url,x,label):
+    ''' Add Water Heater DHWP_MBL
     '''
     # Création du nom suivant la position JSON du device dans l'API Cozytouch
-    nom = u'Water Heater '+label
+    Device_name= u'Water Heater '+label
 	
-	# Création du dictionnaire de définition du device
-    Water_Heater_2 = {}
-    Water_Heater_2 [u'url'] = url
-    Water_Heater_2 [u'x']= x
-    Water_Heater_2 [u'nom']= nom
+    # Création du dictionnaire de définition du device
+    DHWP_MBL = {}
+    DHWP_MBL [u'url'] = url
+    DHWP_MBL [u'x']= x
+    DHWP_MBL [u'nom']= nom
 
-    # Add Temperature of water
-    widget_name = u'Temp '+nom
-    Water_Heater_2 [u'idx_temp_measurement']= domoticz_add_virtual_device(idx,80,widget_name)
-	
-    # Add Water volume estimation
+    # Add : Heating state (Data : modbuslink:PowerHeatElectricalState)
+    Widget_name = u'Heating state'+Device_name
+    DHWP_MBL [u'idx_PowerHeatElectricalState']= domoticz_add_virtual_device(idx,6,Widget_name)
+    # Setting widget
+    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?type=setused&idx='+(DHWP_MBL['idx_PowerHeatElectricalState'])+'&name='+Widget_name+'&description=&strparam1=&strparam2=&protected=false&switchtype=0&customimage=15&used=true&addjvalue=0&addjvalue2=0&options=')
+
+    # Add : Temperature Setpoint (Data : core:WaterTargetTemperatureState / SetTargetTemperature)
+    Widget_name = u'Setpoint '+Device_name
+    DHWP_MBL[u'idx_WaterTargetTemperature']= domoticz_add_virtual_device(idx,8,Widget_name)
+    
+    # Add : Mode Selector (auto/eco/manual) (Data : modbuslink:DHWModeState / setDHWMode)
+    Widget_name = u'Mode '+Device_name
+    DHWP_MBL[u'idx_Mode']= domoticz_add_virtual_device(idx,1002,Widget_name)
+    # Setting widget
+    option = u'TGV2ZWxOYW1lczpBdXRvfEVjb3xNYW51YWw7TGV2ZWxBY3Rpb25zOnx8O1NlbGVjdG9yU3R5bGU6MDtMZXZlbE9mZkhpZGRlbjpmYWxzZQ%3D%3D'
+    send=requests.get(u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(DHWP_MBL[u'idx_Mode'])+'&name='+Widget_name+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
+
+    # Add :Temperature of water (modbuslink:MiddleWaterTemperatureState)
+    Widget_name = u'Middle Temp '+Device_name
+    DHWP_MBL [u'idx_MiddleWaterTemperatureState']= domoticz_add_virtual_device(idx,80,Widget_name)
+
+    # Add : Temperature of water (core:BottomTankWaterTemperatureState)
+    Widget_name = u'Bottom Temp '+Device_name
+    DHWP_MBL [u'idx_BottomTankWaterTemperatureState']= domoticz_add_virtual_device(idx,80,Widget_name)
+
+    # Add : Temperature of water (core:ControlWaterTargetTemperatureState)
+    Widget_name = u'Control Temp '+Device_name
+    DHWP_MBL [u'idx_ControlWaterTargetTemperatureState']= domoticz_add_virtual_device(idx,80,Widget_name)
+
+    # Add : Water volume estimation (core:V40WaterVolumeEstimationState)
     # V40 is measured in litres (L) and shows the amount of warm (mixed) water with a temperature of 40℃, which can be drained from a switched off electric water heater
-    widget_name = u'Estimated volume at 40 deg '+nom
-    Water_Heater_2[u'idx_water_estimation']= domoticz_add_virtual_device(idx,113,widget_name)
-    # Personnalisation du compteur
-    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?addjvalue=0&addjvalue2=0&customimage=2&description=&idx='+(Water_Heater_2['idx_water_estimation'])+'&name='+widget_name+'&switchtype=2&addjvalue=0&addjvalue2=0&used=true&options=')
-
-	# Log Domoticz :
+    Widget_name = u'Estimated volume @ 40 Deg '+Device_name
+    DHWP_MBL[u'idx_V40WaterVolumeEstimationState']= domoticz_add_virtual_device(idx,113,Widget_name)
+    # Setting widget
+    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?type=setused&idx='+(DHWP_MBL['idx_water_estimation'])+'&name='+Widget_name+'&description=&switchtype=0&customimage=11&devoptions=1%3BL&used=true')
+    
+    # Log Domoticz :
     domoticz_write_log(u"Cozytouch : creation "+nom+u" ,url: "+url)
 
     # ajout du dictionnaire dans la liste des device:
-    liste.append(Water_Heater_2)
+    liste.append(DHWP_MBL)
 
     print(u"Ajout: "+nom)
     return liste
@@ -1892,17 +1917,36 @@ def maj_device(data,name,p,x):
             # Water volume estimation  (core:V40WaterVolumeEstimationState)
             domoticz_write_device_analog((value_by_name(data,x,u'core:V40WaterVolumeEstimationState')),(classe.get(u'idx_water_estimation')))
 
-	''' Mise à jour : Water_Heater_2
+    ''' Mise à jour : DHWP_MBL
     '''
-    if name == dict_cozytouch_devtypes.get(u'Water_Heater_2') :
-		
-		# Temperature measurement
-		domoticz_write_device_analog((value_by_name(data,x,u'modbuslink:MiddleWaterTemperatureState')),(classe.get(u'idx_temp_measurement')))
+    if name == dict_cozytouch_devtypes.get(u'DHWP_MBL') :
+        
+        # Heating state (modbuslink:PowerHeatElectricalState)
+        domoticz_write_device_switch_onoff((value_by_name(data,x,u'modbuslink:PowerHeatElectricalState')),classe.get(u'idx_PowerHeatElectricalState'))
+        
+        # Temperature of water (modbuslink:MiddleWaterTemperatureState)
+        domoticz_write_device_analog((value_by_name(data,x,u'modbuslink:MiddleWaterTemperatureState')),(classe.get(u'idx_MiddleWaterTemperatureState')))
 
-        # Water volume estimation
-        domoticz_write_device_analog((value_by_name(data,x,u'core:V40WaterVolumeEstimationState')),(classe.get(u'idx_water_estimation')))
+        # Temperature of water (core:BottomTankWaterTemperatureState)
+        domoticz_write_device_analog((value_by_name(data,x,u'core:BottomTankWaterTemperatureState')),(classe.get(u'idx_BottomTankWaterTemperatureState')))
+        
+        # Temperature of water (core:ControlWaterTargetTemperatureState)
+        domoticz_write_device_analog((value_by_name(data,x,u'core:ControlWaterTargetTemperatureState')),(classe.get(u'idx_ControlWaterTargetTemperatureState')))
+        
+        # Water volume estimation (core:V40WaterVolumeEstimationState)
+        domoticz_write_device_analog((value_by_name(data,x,u'core:V40WaterVolumeEstimationState')),(classe.get(u'idx_V40WaterVolumeEstimationState')))
 
-			
+        # Temperature Setpoint (core:WaterTargetTemperatureState / SetTargetTemperature) 
+        gestion_consigne (u'consigne',classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_WaterTargetTemperature'),value_by_name(data,x,u'core:WaterTargetTemperatureState'),u'setWaterTargetTemperature')
+
+        # Mode selector (auto/eco/manual) (Data : modbuslink:DHWModeState / setDHWMode)
+        gestion_switch_selector_domoticz (value_by_name(data,x,u'modbuslink:DHWModeState'),classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_Mode'),
+                                                     level_0='auto',level_10='manual',level_20='eco',setting_command_mode='setDHWMode',command_activate=True)
+
+        # Log Domoticz :
+        domoticz_write_log(u"Cozytouch : creation "+nom+u" ,url: "+url)
+
+        
 '''
 **********************************************************
 Déroulement du script
