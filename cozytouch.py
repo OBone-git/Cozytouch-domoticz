@@ -1272,7 +1272,7 @@ def add_DHWP_MBL (idx,liste,url,x,label):
     DHWP_MBL = {}
     DHWP_MBL [u'url'] = url
     DHWP_MBL [u'x']= x
-    DHWP_MBL [u'nom']= nom
+    DHWP_MBL [u'nom']= Device_name
 
     # Add : Heating state (Data : modbuslink:PowerHeatElectricalState)
     Widget_name = u'Heating state'+Device_name
@@ -1288,7 +1288,7 @@ def add_DHWP_MBL (idx,liste,url,x,label):
     Widget_name = u'Mode '+Device_name
     DHWP_MBL[u'idx_Mode']= domoticz_add_virtual_device(idx,1002,Widget_name)
     # Setting widget
-    option = u'TGV2ZWxOYW1lczpBdXRvfEVjb3xNYW51YWw7TGV2ZWxBY3Rpb25zOnx8O1NlbGVjdG9yU3R5bGU6MDtMZXZlbE9mZkhpZGRlbjpmYWxzZQ%3D%3D'
+    option = u'TGV2ZWxOYW1lczpBdXRvfE1hbnVhbCtFY298TWFudWFsO0xldmVsQWN0aW9uczp8fDtTZWxlY3RvclN0eWxlOjA7TGV2ZWxPZmZIaWRkZW46ZmFsc2U'
     send=requests.get(u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(DHWP_MBL[u'idx_Mode'])+'&name='+Widget_name+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
 
     # Add :Temperature of water (modbuslink:MiddleWaterTemperatureState)
@@ -1309,9 +1309,16 @@ def add_DHWP_MBL (idx,liste,url,x,label):
     DHWP_MBL[u'idx_V40WaterVolumeEstimationState']= domoticz_add_virtual_device(idx,113,Widget_name)
     # Setting widget
     send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?type=setused&idx='+(DHWP_MBL['idx_water_estimation'])+'&name='+Widget_name+'&description=&switchtype=0&customimage=11&devoptions=1%3BL&used=true')
+
+    # Boost selector (Data : modbuslink:DHWBoostModeState / setBoostMode)
+    Widget_name = u'Boost mode '+Device_name
+    DHWP_MBL[u'idx_DHWBoostModeState']= domoticz_add_virtual_device(idx,1002,Widget_name)
+    # Setting widget
+    option = u'TGV2ZWxOYW1lczpPZmZ8T258UHJvZztMZXZlbEFjdGlvbnM6fHw7U2VsZWN0b3JTdHlsZTowO0xldmVsT2ZmSGlkZGVuOmZhbHNl'
+    send=requests.get(u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(DHWP_MBL[u'idx_DHWBoostModeState'])+'&name='+Widget_name+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
     
     # Log Domoticz :
-    domoticz_write_log(u"Cozytouch : creation "+nom+u" ,url: "+url)
+    domoticz_write_log(u"Cozytouch : creation "+classe.get(u'nom')+u" ,url: "+classe.get(u'url'))
 
     # ajout du dictionnaire dans la liste des device:
     liste.append(DHWP_MBL)
@@ -1941,8 +1948,14 @@ def maj_device(data,name,p,x):
 
         # Mode selector (auto/eco/manual) (Data : modbuslink:DHWModeState / setDHWMode)
         gestion_switch_selector_domoticz (value_by_name(data,x,u'modbuslink:DHWModeState'),classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_Mode'),
-                                                     level_0='auto',level_10='manual',level_20='eco',setting_command_mode='setDHWMode',command_activate=True)
+                                                     level_0='autoMode',level_10='manualEcoInactive',level_20='manualEcoActive',
+                                                     setting_command_mode='setDHWMode',command_activate=True)
 
+        # Boost selector (Data : modbuslink:DHWBoostModeState / setBoostMode)
+        gestion_switch_selector_domoticz (value_by_name(data,x,u'modbuslink:DHWBoostModeState'),classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_DHWBoostModeState'),
+                                                     level_0='off',level_10='on',level_20='prog',
+                                                     setting_command_mode='setBoostMode',command_activate=True)
+        
         # Log Domoticz :
         domoticz_write_log(u"Cozytouch : creation "+nom+u" ,url: "+url)
 
