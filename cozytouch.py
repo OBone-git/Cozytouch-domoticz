@@ -1276,9 +1276,9 @@ def add_DHWP_MBL (idx,liste,url,x,label):
 
     # Add : Heating state (Data : modbuslink:PowerHeatElectricalState)
     Widget_name = u'Heating state'+Device_name
-    DHWP_MBL [u'idx_PowerHeatElectricalState']= domoticz_add_virtual_device(idx,6,Widget_name)
+    DHWP_MBL [u'idx_HeatingStatusState']= domoticz_add_virtual_device(idx,6,Widget_name)
     # Setting widget
-    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?type=setused&idx='+(DHWP_MBL['idx_PowerHeatElectricalState'])+'&name='+Widget_name+'&description=&strparam1=&strparam2=&protected=false&switchtype=0&customimage=15&used=true&addjvalue=0&addjvalue2=0&options=')
+    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?type=setused&idx='+(DHWP_MBL['idx_HeatingStatusState'])+'&name='+Widget_name+'&description=&strparam1=&strparam2=&protected=false&switchtype=0&customimage=15&used=true&addjvalue=0&addjvalue2=0&options=')
 
     # Add : Temperature Setpoint (Data : core:WaterTargetTemperatureState / SetTargetTemperature)
     Widget_name = u'Setpoint '+Device_name
@@ -1310,6 +1310,12 @@ def add_DHWP_MBL (idx,liste,url,x,label):
     # Setting widget
     send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?type=setused&idx='+(DHWP_MBL['idx_water_estimation'])+'&name='+Widget_name+'&description=&switchtype=0&customimage=11&devoptions=1%3BL&used=true')
 
+    # Add number of showers remaining (core:NumberOfShowerRemainingState)
+    Widget_name = u'Nbr of showers remaining '+Device_name
+    DHWP_MBL[u'idx_NumberOfShowerRemainingState']= domoticz_add_virtual_device(idx,113,Widget_name)
+    # Setting widget
+    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?type=setused&idx='+(DHWP_MBL['idx_NumberOfShowerRemainingState'])+'&name='+Widget_name+'&description=&switchtype=0&customimage=11&devoptions=1%3BShowers&used=true')
+
     # Boost selector (Data : modbuslink:DHWBoostModeState / setBoostMode)
     Widget_name = u'Boost mode '+Device_name
     DHWP_MBL[u'idx_DHWBoostModeState']= domoticz_add_virtual_device(idx,1002,Widget_name)
@@ -1318,12 +1324,12 @@ def add_DHWP_MBL (idx,liste,url,x,label):
     send=requests.get(u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(DHWP_MBL[u'idx_DHWBoostModeState'])+'&name='+Widget_name+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
     
     # Log Domoticz :
-    domoticz_write_log(u"Cozytouch : creation "+classe.get(u'nom')+u" ,url: "+classe.get(u'url'))
+    domoticz_write_log(u"Cozytouch : creation "+Device_name+u" ,url: "+url)
 
     # ajout du dictionnaire dans la liste des device:
     liste.append(DHWP_MBL)
 
-    print(u"Ajout: "+nom)
+    print(u"Ajout: "+Device_name)
     return liste
 	
 
@@ -1929,7 +1935,11 @@ def maj_device(data,name,p,x):
     if name == dict_cozytouch_devtypes.get(u'DHWP_MBL') :
         
         # Heating state (modbuslink:PowerHeatElectricalState)
-        domoticz_write_device_switch_onoff((value_by_name(data,x,u'modbuslink:PowerHeatElectricalState')),classe.get(u'idx_PowerHeatElectricalState'))
+        if (data,x,u'core:HeatingStatusState') == u'Heating' :
+            HeatingStatusState = u'on'
+        else:
+             HeatingStatusState = u'off'
+        domoticz_write_device_switch_onoff(HeatingStatusState,classe.get(u'idx_HeatingStatusState'))
         
         # Temperature of water (modbuslink:MiddleWaterTemperatureState)
         domoticz_write_device_analog((value_by_name(data,x,u'modbuslink:MiddleWaterTemperatureState')),(classe.get(u'idx_MiddleWaterTemperatureState')))
@@ -1945,6 +1955,9 @@ def maj_device(data,name,p,x):
 
         # Temperature Setpoint (core:WaterTargetTemperatureState / SetTargetTemperature) 
         gestion_consigne (u'consigne',classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_WaterTargetTemperature'),value_by_name(data,x,u'core:WaterTargetTemperatureState'),u'setWaterTargetTemperature')
+
+        # Number of showers remaining (core:NumberOfShowerRemainingState)
+        domoticz_write_device_analog((value_by_name(data,x,u'core:NumberOfShowerRemainingState')),(classe.get(u'idx_NumberOfShowerRemainingState')))
 
         # Mode selector (auto/eco/manual) (Data : modbuslink:DHWModeState / setDHWMode)
         gestion_switch_selector_domoticz (value_by_name(data,x,u'modbuslink:DHWModeState'),classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_Mode'),
