@@ -328,7 +328,6 @@ def domoticz_add_virtual_device(idx,typ,nom,option='none'):
     req=requests.get(myurl)
     if debug:
         print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
-
     # Réponse HTTP 200 OK
     if req.status_code==200 :
         data=json.loads(req.text)
@@ -339,6 +338,28 @@ def domoticz_add_virtual_device(idx,typ,nom,option='none'):
         idx=0
     print('    **** domoticz virtual vensor index : '+str(idx))
     return idx
+
+def domoticz_add_virtual_device_2(idx,typ,nom,unit):
+    ''' Fonction de création de device virtuel
+    '''
+    idx = str(idx).decode("utf-8")
+    typ = str(typ).decode("utf-8")
+
+    myurl=url_domoticz+u'createvirtualsensor&idx='+idx+u'&sensorname='+nom+u'&sensormappedtype='+typ+u'&sensoroptions=1;'+unit
+    req=requests.get(myurl)
+    if debug:
+        print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
+    # Réponse HTTP 200 OK
+    if req.status_code==200 :
+        data=json.loads(req.text)
+        # Lecture de l'idx attribué
+        idx=(data[u'idx'])
+    else :
+        http_error(req.status_code,req.reason) # Appel fonction sur erreur HTTP
+        idx=0
+    print('    **** domoticz virtual vensor index : '+str(idx))
+    return idx
+
 
 '''
 **********************************************************
@@ -1305,14 +1326,26 @@ def add_DHWP_MBL (idx,liste,url,x,label):
 
     # Add : Water volume estimation (core:V40WaterVolumeEstimationState)
     # V40 is measured in litres (L) and shows the amount of warm (mixed) water with a temperature of 40℃, which can be drained from a switched off electric water heater
-    Widget_name = u'Estimated volume @ 40 Deg '+Device_name
-    DHWP_MBL[u'idx_V40WaterVolumeEstimationState']= domoticz_add_virtual_device(idx,113,Widget_name)
+    #Widget_name = u'Estimated volume @ 40 Deg '+Device_name
+    #DHWP_MBL[u'idx_V40WaterVolumeEstimationState']= domoticz_add_virtual_device(idx,113,Widget_name)
     # Setting widget
-    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?type=setused&idx='+(DHWP_MBL['idx_water_estimation'])+'&name='+Widget_name+'&description=&switchtype=0&customimage=11&devoptions=1%3BL&used=true')
+    #send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?type=setused&idx='+(DHWP_MBL['idx_water_estimation'])+'&name='+Widget_name+'&description=&switchtype=0&customimage=11&devoptions=1%3BL&used=true')
 
+    # Add : Remaining Hot water (core:RemainingHotWaterState)
+    Widget_name = u'Remaining Hot Water '+Device_name
+    DHWP_MBL [u'idx_RemainingHotWaterState']= domoticz_add_virtual_device_2 (idx,u'0xF31F',Widget_name,u'L')
+    # Setting widget    
+    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?type=setused&idx='+(DHWP_MBL[u'idx_RemainingHotWaterState'])+'&name='+Widget_name+'&customimage=11&devoptions=&used=true')
+
+    # Add : Remaining Hot water in percent (core:RemainingHotWaterState)
+    Widget_name = u'Remaining Hot Water '+Device_name
+    DHWP_MBL [u'idx_RemainingHotWaterState_in_percent']= domoticz_add_virtual_device_2 (idx,u'0xF306',Widget_name)
+    # Setting widget
+    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?type=setused&idx='+(DHWP_MBL[u'idx_RemainingHotWaterState_in_percent'])+'&name='+Widget_name+'&customimage=11&devoptions=&used=true')
+    
     # Add number of showers remaining (core:NumberOfShowerRemainingState)
     Widget_name = u'Nbr of showers remaining '+Device_name
-    DHWP_MBL[u'idx_NumberOfShowerRemainingState']= domoticz_add_virtual_device(idx,113,Widget_name)
+    DHWP_MBL[u'idx_NumberOfShowerRemainingState']= domoticz_add_virtual_device_2 (idx,u'0xF31F',Widget_name,u'L')
     # Setting widget
     send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?type=setused&idx='+(DHWP_MBL['idx_NumberOfShowerRemainingState'])+'&name='+Widget_name+'&description=&switchtype=0&customimage=11&devoptions=1%3BShowers&used=true')
 
@@ -1322,6 +1355,14 @@ def add_DHWP_MBL (idx,liste,url,x,label):
     # Setting widget
     option = u'TGV2ZWxOYW1lczpPZmZ8T258UHJvZztMZXZlbEFjdGlvbnM6fHw7U2VsZWN0b3JTdHlsZTowO0xldmVsT2ZmSGlkZGVuOmZhbHNl'
     send=requests.get(u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(DHWP_MBL[u'idx_DHWBoostModeState'])+'&name='+Widget_name+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
+
+   # Switch selecteur boost duration:
+    Widget_name = u'Boost duration '+Device_name
+    DHWP_THERM[u'idx_boost_duration']= domoticz_add_virtual_device(idx,1002,nom_Widget_name)
+    # Personnalisation du switch (Modification du nom des levels et de l'icone
+    option = u'TGV2ZWxOYW1lczowfDF8MnwzfDR8NXw2fDc7TGV2ZWxBY3Rpb25zOnx8fHx8fHw7U2VsZWN0b3JTdHlsZTowO0xldmVsT2ZmSGlkZGVuOmZhbHNl'
+    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(DHWP_THERM['idx_boost_duration'])+'&name='+nom_switch+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
+
     
     # Log Domoticz :
     domoticz_write_log(u"Cozytouch : creation "+Device_name+u" ,url: "+url)
@@ -1934,15 +1975,16 @@ def maj_device(data,name,p,x):
     '''
     if name == dict_cozytouch_devtypes.get(u'DHWP_MBL') :
         
-        # Heating state (modbuslink:PowerHeatElectricalState)
-        if (data,x,u'core:HeatingStatusState') == u'Heating' :
-            HeatingStatusState = u'on'
+        # Heating state (core:HeatingStatusState)
+        if (value_by_name(data,x,u'core:HeatingStatusState')) == u'Heating' :
+            HeatingStatusState = u'On'
         else:
-             HeatingStatusState = u'off'
-        domoticz_write_device_switch_onoff(HeatingStatusState,classe.get(u'idx_HeatingStatusState'))
-        
-        # Temperature of water (modbuslink:MiddleWaterTemperatureState)
-        domoticz_write_device_analog((value_by_name(data,x,u'modbuslink:MiddleWaterTemperatureState')),(classe.get(u'idx_MiddleWaterTemperatureState')))
+             HeatingStatusState = u'Off'
+        # Comparaison avec l'état précédent pour mettre à jour uniquement sur changement (évite de remplir les logs inutilement)
+        onoff_prec = var_restore('save_onoff_'+str(classe.get(u'idx_HeatingStatusState')))
+        if onoff_prec != HeatingStatusState :
+            domoticz_write_device_switch_onoff(HeatingStatusState,classe.get(u'idx_HeatingStatusState'))
+            var_save(HeatingStatusState, ('save_onoff_'+str(classe.get('idx_HeatingStatusState'))))
 
         # Temperature of water (core:BottomTankWaterTemperatureState)
         domoticz_write_device_analog((value_by_name(data,x,u'core:BottomTankWaterTemperatureState')),(classe.get(u'idx_BottomTankWaterTemperatureState')))
@@ -1950,8 +1992,11 @@ def maj_device(data,name,p,x):
         # Temperature of water (core:ControlWaterTargetTemperatureState)
         domoticz_write_device_analog((value_by_name(data,x,u'core:ControlWaterTargetTemperatureState')),(classe.get(u'idx_ControlWaterTargetTemperatureState')))
         
-        # Water volume estimation (core:V40WaterVolumeEstimationState)
-        domoticz_write_device_analog((value_by_name(data,x,u'core:V40WaterVolumeEstimationState')),(classe.get(u'idx_V40WaterVolumeEstimationState')))
+        # Water volume estimation (core:RemainingHotWaterState)
+        domoticz_write_device_analog((value_by_name(data,x,u'core:RemainingHotWaterState')),(classe.get(u'idx_RemainingHotWaterState')))
+
+        # Water volume estimation (core:RemainingHotWaterState)
+        #domoticz_write_device_analog((value_by_name(data,x,u'core:RemainingHotWaterState')),(classe.get(u'idx_RemainingHotWaterState_in_percent')))
 
         # Temperature Setpoint (core:WaterTargetTemperatureState / SetTargetTemperature) 
         gestion_consigne (u'consigne',classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_WaterTargetTemperature'),value_by_name(data,x,u'core:WaterTargetTemperatureState'),u'setWaterTargetTemperature')
