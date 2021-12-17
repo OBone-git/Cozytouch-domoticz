@@ -102,6 +102,7 @@ dict_cozytouch_devtypes['PAC OutsideTemp']='io:AtlanticPassAPCOutsideTemperature
 dict_cozytouch_devtypes['PAC InsideTemp']='io:AtlanticPassAPCZoneTemperatureSensor'
 dict_cozytouch_devtypes['PAC Electrical Energy Consumption']='io:TotalElectricalEnergyConsumptionSensor'
 dict_cozytouch_devtypes['DHWP_MBL']='modbuslink:AtlanticDomesticHotWaterProductionMBLComponent'
+dict_cozytouch_devtypes['DHWP_MBL_CEEC']='modbuslink:DHWCumulatedElectricalEnergyConsumptionMBLSystemDeviceSensor'
 '''
 **********************************************************
 Fonctions génériques pour Domoticz
@@ -339,13 +340,13 @@ def domoticz_add_virtual_device(idx,typ,nom,option='none'):
     print('    **** domoticz virtual vensor index : '+str(idx))
     return idx
 
-def domoticz_add_virtual_device_2(idx,typ,nom,unit):
+def domoticz_add_virtual_device_2(idx,typ,nom,unit=''):
     ''' Fonction de création de device virtuel
     '''
     idx = str(idx).decode("utf-8")
     typ = str(typ).decode("utf-8")
 
-    myurl=url_domoticz+u'createvirtualsensor&idx='+idx+u'&sensorname='+nom+u'&sensormappedtype='+typ+u'&sensoroptions=1;'+unit
+    myurl=url_domoticz+u'createdevice&idx='+idx+u'&sensorname='+nom+u'&sensormappedtype='+typ+u'&sensoroptions=1;'+unit
     req=requests.get(myurl)
     if debug:
         print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
@@ -721,6 +722,10 @@ def decouverte_devices():
 				
             elif name == dict_cozytouch_devtypes.get(u'DHWP_MBL'):
                 liste= add_DHWP_MBL (save_idx,liste,url,x,read_label_from_cozytouch(data,x))
+                p+=1
+
+            elif name == dict_cozytouch_devtypes.get(u'DHWP_MBL_CEEC'):
+                liste= add_DHWP_MBL_CEEC(save_idx,liste,url,x,read_label_from_cozytouch(data,x))
                 p+=1
 				
             else :
@@ -1337,32 +1342,31 @@ def add_DHWP_MBL (idx,liste,url,x,label):
     # Setting widget    
     send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?type=setused&idx='+(DHWP_MBL[u'idx_RemainingHotWaterState'])+'&name='+Widget_name+'&customimage=11&devoptions=&used=true')
 
-    # Add : Remaining Hot water in percent (core:RemainingHotWaterState)
+    # Add : Remaining Hot water in percent (#)
     Widget_name = u'Remaining Hot Water '+Device_name
     DHWP_MBL [u'idx_RemainingHotWaterState_in_percent']= domoticz_add_virtual_device_2 (idx,u'0xF306',Widget_name)
     # Setting widget
     send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?type=setused&idx='+(DHWP_MBL[u'idx_RemainingHotWaterState_in_percent'])+'&name='+Widget_name+'&customimage=11&devoptions=&used=true')
     
-    # Add number of showers remaining (core:NumberOfShowerRemainingState)
+    # Add : Number of showers remaining (core:NumberOfShowerRemainingState)
     Widget_name = u'Nbr of showers remaining '+Device_name
     DHWP_MBL[u'idx_NumberOfShowerRemainingState']= domoticz_add_virtual_device_2 (idx,u'0xF31F',Widget_name,u'L')
     # Setting widget
     send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?type=setused&idx='+(DHWP_MBL['idx_NumberOfShowerRemainingState'])+'&name='+Widget_name+'&description=&switchtype=0&customimage=11&devoptions=1%3BShowers&used=true')
 
-    # Boost selector (Data : modbuslink:DHWBoostModeState / setBoostMode)
+    # Add ; Boost selector (Data : modbuslink:DHWBoostModeState / setBoostMode)
     Widget_name = u'Boost mode '+Device_name
     DHWP_MBL[u'idx_DHWBoostModeState']= domoticz_add_virtual_device(idx,1002,Widget_name)
     # Setting widget
     option = u'TGV2ZWxOYW1lczpPZmZ8T258UHJvZztMZXZlbEFjdGlvbnM6fHw7U2VsZWN0b3JTdHlsZTowO0xldmVsT2ZmSGlkZGVuOmZhbHNl'
     send=requests.get(u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(DHWP_MBL[u'idx_DHWBoostModeState'])+'&name='+Widget_name+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
 
-   # Switch selecteur boost duration:
+   # Add : Boost duration (setBoostStartDate / setBoostEndDate)
     Widget_name = u'Boost duration '+Device_name
-    DHWP_THERM[u'idx_boost_duration']= domoticz_add_virtual_device(idx,1002,nom_Widget_name)
-    # Personnalisation du switch (Modification du nom des levels et de l'icone
+    DHWP_MBL[u'idx_boost_duration']= domoticz_add_virtual_device(idx,1002,Widget_name)
+    # Setting widget
     option = u'TGV2ZWxOYW1lczowfDF8MnwzfDR8NXw2fDc7TGV2ZWxBY3Rpb25zOnx8fHx8fHw7U2VsZWN0b3JTdHlsZTowO0xldmVsT2ZmSGlkZGVuOmZhbHNl'
-    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(DHWP_THERM['idx_boost_duration'])+'&name='+nom_switch+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
-
+    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(DHWP_MBL['idx_boost_duration'])+'&name='+Widget_name+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
     
     # Log Domoticz :
     domoticz_write_log(u"Cozytouch : creation "+Device_name+u" ,url: "+url)
@@ -1372,7 +1376,34 @@ def add_DHWP_MBL (idx,liste,url,x,label):
 
     print(u"Ajout: "+Device_name)
     return liste
+
+
+def add_DHWP_MBL_CEEC (idx,liste,url,x,label):
+    ''' Add CumulativeElectricPowerConsumptionSensor
+    '''
+    # Création du nom suivant la position JSON du device dans l'API Cozytouch
+    Device_name= u'Energy '+label
 	
+    # Création du dictionnaire de définition du device
+    DHWP_MBL_CEEC = {}
+    DHWP_MBL_CEEC [u'url'] = url
+    DHWP_MBL_CEEC [u'x']= x
+    DHWP_MBL_CEEC [u'nom']= Device_name
+    
+    # Add : CumulativeElectricPowerConsumptionSensor (core:ElectricEnergyConsumptionState)
+    Widget_name = u'Energy '+Device_name
+    DHWP_MBL_CEEC[u'idx_ElectricEnergyConsumptionState)']= domoticz_add_virtual_device(idx,113,Widget_name)
+    
+    # Log Domoticz :
+    domoticz_write_log(u"Cozytouch : creation "+Device_name+u" ,url: "+url)
+
+    # ajout du dictionnaire dans la liste des device:
+    liste.append(DHWP_MBL_CEEC)
+
+    print(u"Ajout: "+Device_name)
+    return liste
+
+    
 
 def ajout_bridge_cozytouch(idx,liste,url,x,label):
     nom = u'Bridge Cozytouch '+label
@@ -1995,8 +2026,10 @@ def maj_device(data,name,p,x):
         # Water volume estimation (core:RemainingHotWaterState)
         domoticz_write_device_analog((value_by_name(data,x,u'core:RemainingHotWaterState')),(classe.get(u'idx_RemainingHotWaterState')))
 
-        # Water volume estimation (core:RemainingHotWaterState)
-        #domoticz_write_device_analog((value_by_name(data,x,u'core:RemainingHotWaterState')),(classe.get(u'idx_RemainingHotWaterState_in_percent')))
+        # Water volume estimation in percent 
+        # Calculated ratio between "core:RemainingHotWaterState" in L and the maximum value observed for this item, designed by "capacity_tank"
+        capacity_tank = 206
+        domoticz_write_device_analog(int(float(value_by_name(data,x,u'core:RemainingHotWaterState'))/float(capacity_tank)*100)),(classe.get(u'idx_RemainingHotWaterState_in_percent'))
 
         # Temperature Setpoint (core:WaterTargetTemperatureState / SetTargetTemperature) 
         gestion_consigne (u'consigne',classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_WaterTargetTemperature'),value_by_name(data,x,u'core:WaterTargetTemperatureState'),u'setWaterTargetTemperature')
@@ -2013,11 +2046,14 @@ def maj_device(data,name,p,x):
         gestion_switch_selector_domoticz (value_by_name(data,x,u'modbuslink:DHWBoostModeState'),classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_DHWBoostModeState'),
                                                      level_0='off',level_10='on',level_20='prog',
                                                      setting_command_mode='setBoostMode',command_activate=True)
-        
-        # Log Domoticz :
-        domoticz_write_log(u"Cozytouch : creation "+nom+u" ,url: "+url)
 
-        
+    ''' Mise à jour : DHWP_MBL_CEEC
+    '''
+    if name == dict_cozytouch_devtypes.get(u'DHWP_MBL_CEEC') :
+
+        # CumulativeElectricPowerConsumptionSensor (core:ElectricEnergyConsumptionState)
+        domoticz_write_device_analog((value_by_name(data,x,u'core:ElectricEnergyConsumptionState')),(classe.get(u'idx_ElectricEnergyConsumptionState')))
+    
 '''
 **********************************************************
 Déroulement du script
