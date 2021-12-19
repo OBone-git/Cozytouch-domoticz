@@ -1301,7 +1301,7 @@ def add_DHWP_MBL (idx,liste,url,x,label):
     DHWP_MBL [u'nom']= Device_name
 
     # Add : Heating state (Data : modbuslink:PowerHeatElectricalState)
-    Widget_name = u'Heating state'+Device_name
+    Widget_name = u'Heating state '+Device_name
     DHWP_MBL [u'idx_HeatingStatusState']= domoticz_add_virtual_device(idx,6,Widget_name)
     # Setting widget
     send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?type=setused&idx='+(DHWP_MBL['idx_HeatingStatusState'])+'&name='+Widget_name+'&description=&strparam1=&strparam2=&protected=false&switchtype=0&customimage=15&used=true&addjvalue=0&addjvalue2=0&options=')
@@ -1392,7 +1392,7 @@ def add_DHWP_MBL_CEEC (idx,liste,url,x,label):
     
     # Add : CumulativeElectricPowerConsumptionSensor (core:ElectricEnergyConsumptionState)
     Widget_name = u'Energy '+Device_name
-    DHWP_MBL_CEEC[u'idx_ElectricEnergyConsumptionState)']= domoticz_add_virtual_device(idx,113,Widget_name)
+    DHWP_MBL_CEEC[u'idx_ElectricEnergyConsumptionState']= domoticz_add_virtual_device(idx,113,Widget_name)
     
     # Log Domoticz :
     domoticz_write_log(u"Cozytouch : creation "+Device_name+u" ,url: "+url)
@@ -2017,6 +2017,9 @@ def maj_device(data,name,p,x):
             domoticz_write_device_switch_onoff(HeatingStatusState,classe.get(u'idx_HeatingStatusState'))
             var_save(HeatingStatusState, ('save_onoff_'+str(classe.get('idx_HeatingStatusState'))))
 
+
+        # Temperature of water (modbuslink:MiddleWaterTemperatureState)
+        domoticz_write_device_analog((value_by_name(data,x,u'modbuslink:MiddleWaterTemperatureState')),(classe.get(u'idx_MiddleWaterTemperatureState')))
         # Temperature of water (core:BottomTankWaterTemperatureState)
         domoticz_write_device_analog((value_by_name(data,x,u'core:BottomTankWaterTemperatureState')),(classe.get(u'idx_BottomTankWaterTemperatureState')))
         
@@ -2029,7 +2032,7 @@ def maj_device(data,name,p,x):
         # Water volume estimation in percent 
         # Calculated ratio between "core:RemainingHotWaterState" in L and the maximum value observed for this item, designed by "capacity_tank"
         capacity_tank = 206
-        domoticz_write_device_analog(int(float(value_by_name(data,x,u'core:RemainingHotWaterState'))/float(capacity_tank)*100)),(classe.get(u'idx_RemainingHotWaterState_in_percent'))
+        domoticz_write_device_analog(int(float(value_by_name(data,x,u'core:RemainingHotWaterState'))/float(capacity_tank)*100),(classe.get(u'idx_RemainingHotWaterState_in_percent')))
 
         # Temperature Setpoint (core:WaterTargetTemperatureState / SetTargetTemperature) 
         gestion_consigne (u'consigne',classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_WaterTargetTemperature'),value_by_name(data,x,u'core:WaterTargetTemperatureState'),u'setWaterTargetTemperature')
