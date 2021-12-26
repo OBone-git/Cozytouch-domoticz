@@ -2031,7 +2031,12 @@ def maj_device(data,name,p,x):
 
         # Water volume estimation in percent 
         # Calculated ratio between "core:RemainingHotWaterState" in L and the maximum value observed for this item, designed by "capacity_tank"
-        capacity_tank = 206
+        # capacity_tank = 206
+        capacity = int(float(value_by_name(data,x,u'core:RemainingHotWaterState')))
+        if capacity > var_restore('save_capacity_'+str(classe.get(u'idx_RemainingHotWaterState'))) :
+            var_save(capacity, ('save_capacity_'+str(classe.get('idx_RemainingHotWaterState'))))
+        
+        capacity_tank = var_restore('save_capacity_'+str(classe.get(u'idx_RemainingHotWaterState')))
         domoticz_write_device_analog(int(float(value_by_name(data,x,u'core:RemainingHotWaterState'))/float(capacity_tank)*100),(classe.get(u'idx_RemainingHotWaterState_in_percent')))
 
         # Temperature Setpoint (core:WaterTargetTemperatureState / SetTargetTemperature) 
