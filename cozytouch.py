@@ -1361,13 +1361,6 @@ def add_DHWP_MBL (idx,liste,url,x,label):
     option = u'TGV2ZWxOYW1lczpPZmZ8T258UHJvZztMZXZlbEFjdGlvbnM6fHw7U2VsZWN0b3JTdHlsZTowO0xldmVsT2ZmSGlkZGVuOmZhbHNl'
     send=requests.get(u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(DHWP_MBL[u'idx_DHWBoostModeState'])+'&name='+Widget_name+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
 
-   # Add : Boost duration (setBoostStartDate / setBoostEndDate)
-    Widget_name = u'Boost duration '+Device_name
-    DHWP_MBL[u'idx_boost_duration']= domoticz_add_virtual_device(idx,1002,Widget_name)
-    # Setting widget
-    option = u'TGV2ZWxOYW1lczowfDF8MnwzfDR8NXw2fDc7TGV2ZWxBY3Rpb25zOnx8fHx8fHw7U2VsZWN0b3JTdHlsZTowO0xldmVsT2ZmSGlkZGVuOmZhbHNl'
-    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(DHWP_MBL['idx_boost_duration'])+'&name='+Widget_name+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
-    
     # Log Domoticz :
     domoticz_write_log(u"Cozytouch : creation "+Device_name+u" ,url: "+url)
 
