@@ -1310,7 +1310,7 @@ def add_DHWP_MBL (idx,liste,url,x,label):
     Widget_name = u'Setpoint '+Device_name
     DHWP_MBL[u'idx_WaterTargetTemperature']= domoticz_add_virtual_device(idx,8,Widget_name)
     
-    # Add : Mode Selector (auto/eco/manual) (Data : modbuslink:DHWModeState / setDHWMode)
+    # Add : Mode Selector (auto/manual) (Data : modbuslink:DHWModeState / setDHWMode)
     Widget_name = u'Mode '+Device_name
     DHWP_MBL[u'idx_Mode']= domoticz_add_virtual_device(idx,1002,Widget_name)
     # Setting widget
@@ -1354,13 +1354,20 @@ def add_DHWP_MBL (idx,liste,url,x,label):
     # Setting widget
     send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?type=setused&idx='+(DHWP_MBL['idx_NumberOfShowerRemainingState'])+'&name='+Widget_name+'&description=&switchtype=0&customimage=11&devoptions=1%3BShowers&used=true')
 
-    # Add ; Boost selector (Data : modbuslink:DHWBoostModeState / setBoostMode)
+    # Add : Boost selector (Data : modbuslink:DHWBoostModeState / setBoostMode)
     Widget_name = u'Boost mode '+Device_name
     DHWP_MBL[u'idx_DHWBoostModeState']= domoticz_add_virtual_device(idx,1002,Widget_name)
     # Setting widget
     option = u'TGV2ZWxOYW1lczpPZmZ8T258UHJvZztMZXZlbEFjdGlvbnM6fHw7U2VsZWN0b3JTdHlsZTowO0xldmVsT2ZmSGlkZGVuOmZhbHNl'
     send=requests.get(u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(DHWP_MBL[u'idx_DHWBoostModeState'])+'&name='+Widget_name+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
 
+    # Add : Absence selector (Data : modbuslink:DHWAbsenceModeState / setAbsenceMode)
+    Widget_name = u'Absence mode '+Device_name
+    DHWP_MBL[u'idx_DHWAbsenceModeState']= domoticz_add_virtual_device_2(idx,u'0xF43E',Widget_name)
+    # Setting widget
+    option = u'TGV2ZWxOYW1lczpPZmZ8T247TGV2ZWxBY3Rpb25zOnw7U2VsZWN0b3JTdHlsZTowO0xldmVsT2ZmSGlkZGVuOmZhbHNl'
+    send=requests.get(u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=0&description=&idx='+(DHWP_MBL[u'idx_DHWAbsenceModeState'])+'&name='+Widget_name+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
+    
     # Log Domoticz :
     domoticz_write_log(u"Cozytouch : creation "+Device_name+u" ,url: "+url)
 
@@ -2047,6 +2054,11 @@ def maj_device(data,name,p,x):
         gestion_switch_selector_domoticz (value_by_name(data,x,u'modbuslink:DHWBoostModeState'),classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_DHWBoostModeState'),
                                                      level_0='off',level_10='on',level_20='prog',
                                                      setting_command_mode='setBoostMode',command_activate=True)
+
+        # Absence selector (Data : modbuslink:DHWAbsenceModeState / setAbsenceMode)
+        gestion_switch_selector_domoticz (value_by_name(data,x,u'modbuslink:DHWAbsenceModeState'),classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_DHWAbsenceModeState'),
+                                                     level_0='off',level_10='on',
+                                                     setting_command_mode='setAbsenceMode',command_activate=True)        
 
     ''' Mise à jour : DHWP_MBL_CEEC
     '''
