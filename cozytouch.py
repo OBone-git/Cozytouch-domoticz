@@ -1314,7 +1314,7 @@ def add_DHWP_MBL (idx,liste,url,x,label):
     Widget_name = u'Mode '+Device_name
     DHWP_MBL[u'idx_Mode']= domoticz_add_virtual_device(idx,1002,Widget_name)
     # Setting widget
-    option = u'TGV2ZWxOYW1lczpBdXRvfE1hbnVhbCtFY298TWFudWFsO0xldmVsQWN0aW9uczp8fDtTZWxlY3RvclN0eWxlOjA7TGV2ZWxPZmZIaWRkZW46ZmFsc2U'
+    option = u'TGV2ZWxOYW1lczpBdXRvfE1hbnVhbDtMZXZlbEFjdGlvbnM6fDtTZWxlY3RvclN0eWxlOjA7TGV2ZWxPZmZIaWRkZW46ZmFsc2U%3D'
     send=requests.get(u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(DHWP_MBL[u'idx_Mode'])+'&name='+Widget_name+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
 
     # Add :Temperature of water (modbuslink:MiddleWaterTemperatureState)
