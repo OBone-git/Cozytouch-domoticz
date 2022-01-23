@@ -12,6 +12,7 @@
 
 # modification : allstar71 10/21 : Correction authentification/connexion suite MAJ serveur
 # modification : OBone 11/21 : Ajout 'io:AtlanticPassAPCHeatPumpMainComponent','io:AtlanticPassAPCHeatingAndCoolingZoneComponent','io:AtlanticPassAPCOutsideTemperatureSensor','io:AtlanticPassAPCZoneTemperatureSensor','io:TotalElectricalEnergyConsumptionSensor'.
+# modification : tatrox 01/22 : Ajout classe ['DHWP_THERM_V4_CETHI_IO']="io:AtlanticDomesticHotWaterProductionV2_CETHI_V4_IOComponent" (chauffe eau thermodynamique Atlantic Calypso)
 
 # TODO list:
 # Prise en compte du mode dérogation sur les AtlanticElectricalHeaterWithAdjustableTemperatureSetpointIOComponent
@@ -28,7 +29,7 @@ import requests, shelve, json, time, unicodedata, os, sys, errno
 Paramètres
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 '''
-version=5.33
+version=5.34
 
 debug=1 # 0 : pas de traces debug / 1 : traces requêtes http / 2 : dump data json reçues du serveur cozytouch
 
@@ -96,6 +97,7 @@ dict_cozytouch_devtypes['PAC zone control']='io:AtlanticPassAPCZoneControlZoneCo
 dict_cozytouch_devtypes['DHWP_THERM_V3_IO']="io:AtlanticDomesticHotWaterProductionV3IOComponent"
 dict_cozytouch_devtypes['DHWP_THERM_IO']="io:AtlanticDomesticHotWaterProductionIOComponent"
 dict_cozytouch_devtypes['DHWP_THERM_V2_MURAL_IO']="io:AtlanticDomesticHotWaterProductionV2_MURAL_IOComponent"
+dict_cozytouch_devtypes['DHWP_THERM_V4_CETHI_IO']="io:AtlanticDomesticHotWaterProductionV2_CETHI_V4_IOComponent"
 dict_cozytouch_devtypes['PAC_HeatPump']='io:AtlanticPassAPCHeatPumpMainComponent'
 dict_cozytouch_devtypes['PAC zone component']='io:AtlanticPassAPCHeatingAndCoolingZoneComponent'
 dict_cozytouch_devtypes['PAC OutsideTemp']='io:AtlanticPassAPCOutsideTemperatureSensor'
@@ -669,7 +671,7 @@ def decouverte_devices():
                 liste= ajout_PAC_zone_control (save_idx,liste,url,x,read_label_from_cozytouch(data,x))
                 p+=1
 
-            elif name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V3_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V2_MURAL_IO') :
+            elif name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V3_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V2_MURAL_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V4_CETHI_IO'):
                 liste= Add_DHWP_THERM (save_idx,liste,url,x,(data[u'setup'][u'rootPlace'][u'label']),name) # label sur rootplace
                 p+=1
 
@@ -1064,8 +1066,8 @@ def Add_DHWP_THERM (idx,liste,url,x,label,name):
     send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(DHWP_THERM['idx_away_duration'])+'&name='+nom_switch+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
 
     ######
-    # Widgets added only for SubClass  "io:AtlanticDomesticHotWaterProductionV2_MURAL_IOComponent"
-    if name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V2_MURAL_IO') :
+    # Widgets added only for SubClass  "io:AtlanticDomesticHotWaterProductionV2_MURAL_IOComponent" or "io:AtlanticDomesticHotWaterProductionV2_CETHI_V4_IOComponent"
+    if name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V2_MURAL_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V4_CETHI_IO') :
 
         # Add Temperature of water (io:MiddleWaterTemperatureState)
         widget_name = u'Temp '+nom
@@ -1783,9 +1785,9 @@ def maj_device(data,name,p,x):
             cozytouch_POST(classe.get(u'url'),u'setDerogationOnOffState',u'on')
 	
     ####
-    # Update function : SubClass DHWP_THERM_V3_IO, DHWP_THERM_IO, DHWP_THERM_V2_MURAL_IO
+    # Update function : SubClass DHWP_THERM_V3_IO, DHWP_THERM_IO, DHWP_THERM_V2_MURAL_IO, DHWP_THERM_V4_CETHI_IO
 
-    if name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V3_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V2_MURAL_IO')  :
+    if name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V3_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V2_MURAL_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V4_CETHI_IO') :
 
         # Etat chauffe on/off
         a = (value_by_name(data,x,u"io:OperatingModeCapabilitiesState"))[u'energyDemandStatus']
@@ -1846,8 +1848,8 @@ def maj_device(data,name,p,x):
                                                     level_0=0, level_10=1, level_20=2, level_30=3, level_40=4, level_50=5, level_60=6,level_70=7,setting_command_mode=u'setAwayModeDuration')
 
         ######
-        # Update only for SubClass "DHWP_THERM_V2_MURAL_IO"
-        if name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V2_MURAL_IO')  :
+        # Update only for SubClass "DHWP_THERM_V2_MURAL_IO" or "DHWP_THERM_V4_CETHI_IO"
+        if name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V2_MURAL_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V4_CETHI_IO')  :
 
             # Temperature measurement (io:MiddleWaterTemperatureState)
             domoticz_write_device_analog((value_by_name(data,x,u'io:MiddleWaterTemperatureState')),(classe.get(u'idx_temp_measurement')))
