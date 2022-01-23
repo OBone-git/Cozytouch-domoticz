@@ -12,7 +12,6 @@
 
 # modification : allstar71 10/21 : Correction authentification/connexion suite MAJ serveur
 # modification : OBone 11/21 : Ajout 'io:AtlanticPassAPCHeatPumpMainComponent','io:AtlanticPassAPCHeatingAndCoolingZoneComponent','io:AtlanticPassAPCOutsideTemperatureSensor','io:AtlanticPassAPCZoneTemperatureSensor','io:TotalElectricalEnergyConsumptionSensor'.
-
 # modification : tatrox 01/22 : ajout consigne de dérogation pour les radiateurs électriques
 
 # TODO list:
@@ -32,13 +31,14 @@ Paramètres
 '''
 version=5.34
 
-debug=0 # 0 : pas de traces debug / 1 : traces requêtes http / 2 : dump data json reçues du serveur cozytouch
+debug=1 # 0 : pas de traces debug / 1 : traces requêtes http / 2 : dump data json reçues du serveur cozytouch
+
 domoticz_ip=u'192.168.xx.xx'
 domoticz_port=u'8080'
 
 
 login="xxxxx"
-password="xxxx"
+password="xxxxx"
 
 
 
