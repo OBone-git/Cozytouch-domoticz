@@ -33,7 +33,7 @@ Paramètres
 version=5.34
 
 debug=0 # 0 : pas de traces debug / 1 : traces requêtes http / 2 : dump data json reçues du serveur cozytouch
-domoticz_ip=u'192.168.x.x'
+domoticz_ip=u'192.168.xx.xx'
 domoticz_port=u'8080'
 
 
