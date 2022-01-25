@@ -12,7 +12,9 @@
 
 # modification : allstar71 10/21 : Correction authentification/connexion suite MAJ serveur
 # modification : OBone 11/21 : Ajout 'io:AtlanticPassAPCHeatPumpMainComponent','io:AtlanticPassAPCHeatingAndCoolingZoneComponent','io:AtlanticPassAPCOutsideTemperatureSensor','io:AtlanticPassAPCZoneTemperatureSensor','io:TotalElectricalEnergyConsumptionSensor'.
+# modification : tatrox 01/22 : ajout consigne de dérogation pour les radiateurs électriques
 # modification : tatrox 01/22 : Ajout classe ['DHWP_THERM_V4_CETHI_IO']="io:AtlanticDomesticHotWaterProductionV2_CETHI_V4_IOComponent" (chauffe eau thermodynamique Atlantic Calypso)
+
 
 # TODO list:
 # Prise en compte du mode dérogation sur les AtlanticElectricalHeaterWithAdjustableTemperatureSetpointIOComponent
@@ -791,7 +793,7 @@ def ajout_radiateur(idx,liste,url,x,label):
     # Consigne de dérogation valable en mode auto, applique une consigne de dérogation commande :"setDerogatedTargetTemperature" + température souhaité
     # Fonctionnement de la dérogation : En mode auto, si on applique uen consigne > à la consigne en cours (eco ou confort), on applique la dérogation (retour d'état pour savoir si on est dérogation? pas trouvé encore)
     # POur annuler la dérogation il faut appliquer la consigne qui doit etre en cours soit eco ou confort suivant le mode du radiateur,
-    #Attention le radiateur n'accepte pas une consigne de dérogation inférieure à la consigne qui doit etre appliquée (eco ou confort)
+    # Attention le radiateur n'accepte pas une consigne de dérogation inférieure à la consigne qui doit etre appliquée (eco ou confort)
 
     # Création Mesure température :
     nom_mesure = u'T°C '+nom
@@ -804,6 +806,10 @@ def ajout_radiateur(idx,liste,url,x,label):
     # Création Consigne température Eco :
     nom_cons_eco= u'Cons. éco '+nom
     radiateur[u'idx_cons_temp_eco']= domoticz_add_virtual_device(idx,8,nom_cons_eco)
+
+    # Création Consigne température dérogation :
+    nom_cons_derog = u'Cons. dérogation '+nom 
+    radiateur[u'idx_cons_temp_derogation']= domoticz_add_virtual_device(idx,8,nom_cons_derog ) 
 
     # Création Compteur d'énergie :
     nom_compteur= u'Conso '+nom
@@ -1284,7 +1290,7 @@ def gestion_consigne(texte,url_device,nom_device, idx_cons_domoticz, cons_device
     idx_cons_domoticz= idx_cons_domoticz.encode("utf-8")
     cons_domoticz_prec = var_restore('save_consigne_'+(nom_device.encode("utf-8"))+idx_cons_domoticz)
 
-    #Si Gestion di mode éco radiateur, on soustrait à la consigne confort (cons_device) , la consigne éco (cons_device_eco) :
+    #Si Gestion du mode éco radiateur, on soustrait à la consigne confort (cons_device) , la consigne éco (cons_device_eco) :
     if cons_device_abais_eco >0 :
         cons_device_confort = cons_device # Sauvegarde consigne cozytouch confort
         cons_device_eco = cons_device - cons_device_abais_eco # Calcul consigne cozytouch éco
@@ -1304,12 +1310,13 @@ def gestion_consigne(texte,url_device,nom_device, idx_cons_domoticz, cons_device
 
 
     # comparaison avec la consigne en cours
-    if cons_device != cons_domoticz and cons_domoticz != cons_domoticz_prec and cons_domoticz_prec > 0:
+    if cons_device != cons_domoticz and cons_domoticz != cons_domoticz_prec and (cons_domoticz_prec > 0 or texte == "derogation"):
         # si un écart est détecté
         # et si le changement de consigne vient de domoticz, on envoie le changement au device
         # et si la consigne précédente est différente de 0 (cas au démarrage)
-
-    # Si Gestion du mode éco radiateur :
+        # ou si c'est une consigne de dérogation, elle est remise à 0 par Cozytouch si sa valeur correspond à son mode de température ex: consigne eco et valeur de dérogation eco
+    
+        # Si Gestion du mode éco radiateur :
         if cons_device_abais_eco > 0 :
             # On fait consigne confort Domoticz - consigne éco demandée par Domoticz (Cozytouch demande l'écart entre les deux)
             # On prend la consigne confort Domoticz pour le cas où l'on change les 2 consignes en meme temps
@@ -1332,7 +1339,7 @@ def gestion_consigne(texte,url_device,nom_device, idx_cons_domoticz, cons_device
         if debug:
             print('Fonction gestion_consigne : Chgt consigne Domoticz, envoie vers Cozytouch : '+(nom_device.encode("utf-8"))+'/'+(texte.encode("utf-8"))+'/'+str(cons_domoticz)+'°C')
 
-    elif cons_device != cons_domoticz and cons_domoticz == cons_domoticz_prec and cons_domoticz_prec > 0:
+    elif cons_device != cons_domoticz and cons_domoticz == cons_domoticz_prec and (cons_domoticz_prec > 0 or texte == "derogation"):
         # sinon, le changement vient du device Cozytouch
         # mise à jour de domoticz
         if debug:
@@ -1521,6 +1528,9 @@ def maj_device(data,name,p,x):
 
         # Mesure température : Device : TemperatureSensor, Parametre 1 : core:TemperatureState
         domoticz_write_device_analog((value_by_name(data,(x+1),u'core:TemperatureState')),(classe.get(u'idx_mesure_temp')))
+
+        # Consigne de température par dérogation : Device : AtlanticElectricalHeaterWithAdjustableTemperatureSetpointIOComponent, Parametre : core:DerogatedTargetTemperatureState
+        gestion_consigne(u'derogation',classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_cons_temp_derogation'),value_by_name(data,x,u'core:DerogatedTargetTemperatureState'),(u'setDerogatedTargetTemperature'))
 
         # Consigne de température confort : Device : AtlanticElectricalHeaterWithAdjustableTemperatureSetpointIOComponent, Parametre 9 : core:ComfortRoomTemperatureState
         gestion_consigne(u'confort',classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_cons_temp_confort'),value_by_name(data,x,u'core:ComfortRoomTemperatureState'),(u'setComfortTemperature'))
