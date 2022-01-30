@@ -21,7 +21,7 @@
 # RADIATEUR : MODIFIER LA FONCTION GESTION CONSIGNE POUR SORTIR LE CALCUL DE LA TEMP ECO
 # PAC : AJOUTER LE MODE ECO OU CONFORT EN MODE PROG SUR LES ZONES
 
-import requests, shelve, json, time, unicodedata, os, sys, errno
+import requests, shelve, json, time, unicodedata, os, sys, errno, datetime
 
 
 '''
@@ -2056,9 +2056,25 @@ def maj_device(data,name,p,x):
                                                      setting_command_mode='setBoostMode',command_activate=True)
 
         # Absence selector (Data : modbuslink:DHWAbsenceModeState / setAbsenceMode)
-        gestion_switch_selector_domoticz (value_by_name(data,x,u'modbuslink:DHWAbsenceModeState'),classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_DHWAbsenceModeState'),
+        return_switch = gestion_switch_selector_domoticz (value_by_name(data,x,u'modbuslink:DHWAbsenceModeState'),classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_DHWAbsenceModeState'),
                                                      level_0='off',level_10='on',
-                                                     setting_command_mode='setAbsenceMode',command_activate=True)        
+                                                     setting_command_mode='setAbsenceMode',command_activate=False)
+
+        # Evaluation du retour de la fonction : cas n°1, demande d'activation mode absence :
+        if return_switch == (1, u'on'):
+            # 1-Reading actual system time
+            dt=datetime.datetime.now()
+            actual_time={"hour":dt.hour,"month":dt.month,"second":dt.second,"weekday":dt.weekday(),"year":dt.year,"day":dt.day,"minute":dt.minute}
+            start_time=str(actual_time).encode('utf-8')
+            # 2-Sending Start Date
+            cozytouch_POST(classe.get(u'url'),u'setAbsenceStartDate',start_time)
+            time.sleep(0.3)
+            # 2-Sending End Date
+            end_time=str({"hour":dt.hour,"month":dt.month,"second":dt.second,"weekday":dt.weekday(),"year":(dt.year)+1,"day":dt.day,"minute":dt.minute}).encode('utf-8')
+            cozytouch_POST(classe.get(u'url'),u'setAbsenceEndDate',end_time)
+            time.sleep(0.3)
+            # 3-Sending Absence Mode
+            cozytouch_POST(classe.get(u'url'),u'setAbsenceMode',u'on')
 
     ''' Mise à jour : DHWP_MBL_CEEC
     '''
