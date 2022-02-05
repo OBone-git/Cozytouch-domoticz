@@ -2064,16 +2064,19 @@ def maj_device(data,name,p,x):
         if return_switch == (1, u'on'):
             # 1-Reading actual system time
             dt=datetime.datetime.now()
-            actual_time={"hour":dt.hour,"month":dt.month,"second":dt.second,"weekday":dt.weekday(),"year":dt.year,"day":dt.day,"minute":dt.minute}
-            start_time=str(actual_time).encode('utf-8')
+            # 2-Building JSON dictionnary with start time, equal to actual time
+            start_time = u'"hour":'+str(dt.hour)+u',"month":'+str(dt.hour)+u',"second":'+str(dt.second)+u',"weekday":'+str(dt.weekday())+u',"year":'+str(dt.year)+u',"day":'+str(dt.day)+u',"minute":'+str(dt.minute)
             # 2-Sending Start Date
-            cozytouch_POST(classe.get(u'url'),u'setAbsenceStartDate',start_time)
+            cozytouch_POST(classe.get(u'url'),u'setAbsenceStartDate',u'{'+start_time+u'}')
+            # 3-Building JSON dictionnary with end time, equal to start time + 1year
+            end_time = u'"hour":'+str(dt.hour)+u',"month":'+str(dt.hour)+u',"second":'+str(dt.second)+u',"weekday":'+str(dt.weekday())+u',"year":'+str(dt.year+1)+u',"day":'+str(dt.day)+u',"minute":'+str(dt.minute)
+            # Time sleep
             time.sleep(0.3)
-            # 2-Sending End Date
-            end_time=str({"hour":dt.hour,"month":dt.month,"second":dt.second,"weekday":dt.weekday(),"year":(dt.year)+1,"day":dt.day,"minute":dt.minute}).encode('utf-8')
-            cozytouch_POST(classe.get(u'url'),u'setAbsenceEndDate',end_time)
+            # 4-Sending End Date
+            cozytouch_POST(classe.get(u'url'),u'setAbsenceEndDate',u'{'+end_time+u'}'))
+            # Time sleep
             time.sleep(0.3)
-            # 3-Sending Absence Mode
+            # 5-Sending Absence Mode
             cozytouch_POST(classe.get(u'url'),u'setAbsenceMode',u'on')
 
     ''' Mise à jour : DHWP_MBL_CEEC
