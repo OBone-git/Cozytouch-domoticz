@@ -2060,24 +2060,32 @@ def maj_device(data,name,p,x):
                                                      level_0='off',level_10='on',
                                                      setting_command_mode='setAbsenceMode',command_activate=False)
 
-        # Evaluation du retour de la fonction : cas n°1, demande d'activation mode absence :
+        # Evaluation of function return : Case n°1 : Absence mode activation request from Domoticz
         if return_switch == (1, u'on'):
             # 1-Reading actual system time
             dt=datetime.datetime.now()
-            # 2-Building JSON dictionnary with start time, equal to actual time
-            start_time = u'"hour":'+str(dt.hour)+u',"month":'+str(dt.hour)+u',"second":'+str(dt.second)+u',"weekday":'+str(dt.weekday())+u',"year":'+str(dt.year)+u',"day":'+str(dt.day)+u',"minute":'+str(dt.minute)
+            # 2-Building JSON data with start time, equal to actual time
+            start_time = json.dumps({"hour":dt.hour,"month":dt.hour,"second":dt.second,"weekday":dt.weekday(),"year":dt.year,"day":dt.day,"minute":dt.minute})
             # 2-Sending Start Date
-            cozytouch_POST(classe.get(u'url'),u'setAbsenceStartDate',u'{'+start_time+u'}')
-            # 3-Building JSON dictionnary with end time, equal to start time + 1year
-            end_time = u'"hour":'+str(dt.hour)+u',"month":'+str(dt.hour)+u',"second":'+str(dt.second)+u',"weekday":'+str(dt.weekday())+u',"year":'+str(dt.year+1)+u',"day":'+str(dt.day)+u',"minute":'+str(dt.minute)
+            cozytouch_POST(classe.get(u'url'),u'setAbsenceStartDate',start_time)
+            # 3-Building JSON data with end time, equal to start time + 1year
+            end_time = json.dumps({"hour":dt.hour,"month":dt.hour,"second":dt.second,"weekday":dt.weekday(),"year":dt.year+1,"day":dt.day,"minute":dt.minute})
             # Time sleep
             time.sleep(0.3)
             # 4-Sending End Date
-            cozytouch_POST(classe.get(u'url'),u'setAbsenceEndDate',u'{'+end_time+u'}'))
+            cozytouch_POST(classe.get(u'url'),u'setAbsenceEndDate',end_time)
             # Time sleep
             time.sleep(0.3)
             # 5-Sending Absence Mode
             cozytouch_POST(classe.get(u'url'),u'setAbsenceMode',u'on')
+
+       # Evaluation of function return : Case n°1 : Absence mode stop request from Domoticz
+        if return_switch == (1, u'off'):
+            cozytouch_POST(classe.get(u'url'),u'setAbsenceMode',u'off')
+            
+
+
+            
 
     ''' Mise à jour : DHWP_MBL_CEEC
     '''
