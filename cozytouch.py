@@ -2075,7 +2075,7 @@ def maj_device(data,name,p,x):
             # 4-Sending End Date
             cozytouch_POST(classe.get(u'url'),u'setAbsenceEndDate',end_time)
             # Time sleep
-            time.sleep(1)
+            time.sleep(3)
             # 5-Sending Absence Mode
             cozytouch_POST(classe.get(u'url'),u'setAbsenceMode',u'on')
 
