@@ -96,15 +96,18 @@ dict_cozytouch_devtypes['module fil pilote']='io:AtlanticElectricalHeaterIOCompo
 dict_cozytouch_devtypes['bridge cozytouch']='internal:PodMiniComponent' or 'internal:PodV3Component'
 dict_cozytouch_devtypes['PAC main control']='io:AtlanticPassAPCZoneControlMainComponent'
 dict_cozytouch_devtypes['PAC zone control']='io:AtlanticPassAPCZoneControlZoneComponent'
-dict_cozytouch_devtypes['DHWP_THERM_V3_IO']="io:AtlanticDomesticHotWaterProductionV3IOComponent"
-dict_cozytouch_devtypes['DHWP_THERM_IO']="io:AtlanticDomesticHotWaterProductionIOComponent"
-dict_cozytouch_devtypes['DHWP_THERM_V2_MURAL_IO']="io:AtlanticDomesticHotWaterProductionV2_MURAL_IOComponent"
-dict_cozytouch_devtypes['DHWP_THERM_V4_CETHI_IO']="io:AtlanticDomesticHotWaterProductionV2_CETHI_V4_IOComponent"
 dict_cozytouch_devtypes['PAC_HeatPump']='io:AtlanticPassAPCHeatPumpMainComponent'
 dict_cozytouch_devtypes['PAC zone component']='io:AtlanticPassAPCHeatingAndCoolingZoneComponent'
 dict_cozytouch_devtypes['PAC OutsideTemp']='io:AtlanticPassAPCOutsideTemperatureSensor'
 dict_cozytouch_devtypes['PAC InsideTemp']='io:AtlanticPassAPCZoneTemperatureSensor'
 dict_cozytouch_devtypes['PAC Electrical Energy Consumption']='io:TotalElectricalEnergyConsumptionSensor'
+
+# Water Heating System
+dict_cozytouch_devtypes['DHWP_THERM_V3_IO']="io:AtlanticDomesticHotWaterProductionV3IOComponent"
+dict_cozytouch_devtypes['DHWP_THERM_IO']="io:AtlanticDomesticHotWaterProductionIOComponent"
+dict_cozytouch_devtypes['DHWP_THERM_V2_MURAL_IO']="io:AtlanticDomesticHotWaterProductionV2_MURAL_IOComponent"
+dict_cozytouch_devtypes['DHWP_THERM_V4_CETHI_IO']="io:AtlanticDomesticHotWaterProductionV2_CETHI_V4_IOComponent"
+dict_cozytouch_devtypes['DHWP_V2_SPLIT_IO']="io:AtlanticDomesticHotWaterProductionV2_SPLIT_IOComponent"
 
 '''
 **********************************************************
@@ -673,7 +676,7 @@ def decouverte_devices():
                 liste= ajout_PAC_zone_control (save_idx,liste,url,x,read_label_from_cozytouch(data,x))
                 p+=1
 
-            elif name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V3_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V2_MURAL_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V4_CETHI_IO'):
+            elif name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V3_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V2_MURAL_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V4_CETHI_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_V2_SPLIT_IO'):
                 liste= Add_DHWP_THERM (save_idx,liste,url,x,(data[u'setup'][u'rootPlace'][u'label']),name) # label sur rootplace
                 p+=1
 
@@ -1073,7 +1076,7 @@ def Add_DHWP_THERM (idx,liste,url,x,label,name):
 
     ######
     # Widgets added only for SubClass  "io:AtlanticDomesticHotWaterProductionV2_MURAL_IOComponent" or "io:AtlanticDomesticHotWaterProductionV2_CETHI_V4_IOComponent"
-    if name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V2_MURAL_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V4_CETHI_IO') :
+    if name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V2_MURAL_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V4_CETHI_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_V2_SPLIT_IO'):
 
         # Add Temperature of water (io:MiddleWaterTemperatureState)
         widget_name = u'Temp '+nom
@@ -1087,12 +1090,13 @@ def Add_DHWP_THERM (idx,liste,url,x,label,name):
         widget_name = u'Energy Elec '+nom
         DHWP_THERM[u'idx_energy_counter_heatelec']= domoticz_add_virtual_device(idx,113,widget_name)
 
-        # Add Water volume estimation (core:V40WaterVolumeEstimationState)
-        # V40 is measured in litres (L) and shows the amount of warm (mixed) water with a temperature of 40℃, which can be drained from a switched off electric water heater
-        widget_name = u'Estimated volume at 40 deg '+nom
-        DHWP_THERM[u'idx_water_estimation']= domoticz_add_virtual_device(idx,113,widget_name)
-        # Personnalisation du compteur
-        send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?addjvalue=0&addjvalue2=0&customimage=2&description=&idx='+(DHWP_THERM['idx_water_estimation'])+'&name='+widget_name+'&switchtype=2&addjvalue=0&addjvalue2=0&used=true&options=')
+        if name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V2_MURAL_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V4_CETHI_IO'):
+            # Add Water volume estimation (core:V40WaterVolumeEstimationState)
+            # V40 is measured in litres (L) and shows the amount of warm (mixed) water with a temperature of 40℃, which can be drained from a switched off electric water heater
+            widget_name = u'Estimated volume at 40 deg '+nom
+            DHWP_THERM[u'idx_water_estimation']= domoticz_add_virtual_device(idx,113,widget_name)
+            # Personnalisation du compteur
+            send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?addjvalue=0&addjvalue2=0&customimage=2&description=&idx='+(DHWP_THERM['idx_water_estimation'])+'&name='+widget_name+'&switchtype=2&addjvalue=0&addjvalue2=0&used=true&options=')
 
     # Log Domoticz :
     domoticz_write_log(u"Cozytouch : création "+nom+u" ,url: "+url)
@@ -1795,9 +1799,9 @@ def maj_device(data,name,p,x):
             cozytouch_POST(classe.get(u'url'),u'setDerogationOnOffState',u'on')
 	
     ####
-    # Update function : SubClass DHWP_THERM_V3_IO, DHWP_THERM_IO, DHWP_THERM_V2_MURAL_IO, DHWP_THERM_V4_CETHI_IO
+    # Update function : SubClass DHWP_THERM_V3_IO, DHWP_THERM_IO, DHWP_THERM_V2_MURAL_IO, DHWP_THERM_V4_CETHI_IO, DHWP_V2_SPLIT_IO
 
-    if name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V3_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V2_MURAL_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V4_CETHI_IO') :
+    if name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V3_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V2_MURAL_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V4_CETHI_IO')or name == dict_cozytouch_devtypes.get(u'DHWP_V2_SPLIT_IO'):
 
         # Etat chauffe on/off
         a = (value_by_name(data,x,u"io:OperatingModeCapabilitiesState"))[u'energyDemandStatus']
@@ -1859,7 +1863,7 @@ def maj_device(data,name,p,x):
 
         ######
         # Update only for SubClass "DHWP_THERM_V2_MURAL_IO" or "DHWP_THERM_V4_CETHI_IO"
-        if name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V2_MURAL_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V4_CETHI_IO')  :
+        if name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V2_MURAL_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V4_CETHI_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_V2_SPLIT_IO')  :
 
             # Temperature measurement (io:MiddleWaterTemperatureState)
             domoticz_write_device_analog((value_by_name(data,x,u'io:MiddleWaterTemperatureState')),(classe.get(u'idx_temp_measurement')))
@@ -1869,9 +1873,10 @@ def maj_device(data,name,p,x):
 
             # Heat Electrical Energy Counter (io:PowerHeatElectricalState)
             domoticz_write_device_analog((value_by_name(data,x,u'io:PowerHeatElectricalState')),(classe.get(u'idx_energy_counter_heatelec')))
-
-            # Water volume estimation  (core:V40WaterVolumeEstimationState)
-            domoticz_write_device_analog((value_by_name(data,x,u'core:V40WaterVolumeEstimationState')),(classe.get(u'idx_water_estimation')))
+            
+            if name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V2_MURAL_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V4_CETHI_IO'):
+                # Water volume estimation  (core:V40WaterVolumeEstimationState)
+                domoticz_write_device_analog((value_by_name(data,x,u'core:V40WaterVolumeEstimationState')),(classe.get(u'idx_water_estimation')))
 
 '''
 **********************************************************
