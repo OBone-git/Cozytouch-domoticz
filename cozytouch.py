@@ -1356,9 +1356,9 @@ def add_DHWP_MBL (idx,liste,url,x,label):
 
     # Add : Boost selector (Data : modbuslink:DHWBoostModeState / setBoostMode)
     Widget_name = u'Boost mode '+Device_name
-    DHWP_MBL[u'idx_DHWBoostModeState']= domoticz_add_virtual_device(idx,1002,Widget_name)
+    DHWP_MBL[u'idx_DHWBoostModeState']= domoticz_add_virtual_device_2(idx,u'0xF43E',Widget_name)
     # Setting widget
-    option = u'TGV2ZWxOYW1lczpPZmZ8T258UHJvZztMZXZlbEFjdGlvbnM6fHw7U2VsZWN0b3JTdHlsZTowO0xldmVsT2ZmSGlkZGVuOmZhbHNl'
+    option = u'TGV2ZWxOYW1lczpPZmZ8T247TGV2ZWxBY3Rpb25zOnw7U2VsZWN0b3JTdHlsZTowO0xldmVsT2ZmSGlkZGVuOmZhbHNl'
     send=requests.get(u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(DHWP_MBL[u'idx_DHWBoostModeState'])+'&name='+Widget_name+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
 
     # Add : Absence selector (Data : modbuslink:DHWAbsenceModeState / setAbsenceMode)
@@ -1368,23 +1368,11 @@ def add_DHWP_MBL (idx,liste,url,x,label):
     option = u'TGV2ZWxOYW1lczpPZmZ8T247TGV2ZWxBY3Rpb25zOnw7U2VsZWN0b3JTdHlsZTowO0xldmVsT2ZmSGlkZGVuOmZhbHNl'
     send=requests.get(u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=0&description=&idx='+(DHWP_MBL[u'idx_DHWAbsenceModeState'])+'&name='+Widget_name+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
 
-    # Add : Number of showers (water qty in %) selector (Data : core:ExpectedNumberOfShowerState / setExpectedNumberOfShower)
-    # Value prend la valeur 1 pour 60 %, 2 pour 70 %, 3 pour 80 %, 4 pour 90 % et 5 pour 100
-    # Créer un switch selector avec des boutons : 60. 70, 80, 90 et 100 %
-    # Sous Cozytouch, le switch n'a d'interet qu'en mode manuel sur Cozytouch : ("name": "modbuslink:DHWModeState","value": "manualEcoInactive")
-    
-
-
-    
-    # Switch selecteur durée absence :
-    # nom_switch = u'Duree absence (jours) '+nom
-    # PAC_zone_component[u'idx_away_duration']= domoticz_add_virtual_device(idx,1002,nom_switch)
-    # Personnalisation du switch (Modification du nom des levels et de l'icone
-    # option = u'TGV2ZWxOYW1lczowfDF8MnwzfDR8NXw2fDc7TGV2ZWxBY3Rpb25zOnx8fHx8fHw7U2VsZWN0b3JTdHlsZTowO0xldmVsT2ZmSGlkZGVuOmZhbHNl'
-    # send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(PAC_zone_component['idx_away_duration'])+'&name='+nom_switch+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
-
-
-
+    # Add : Expected Hot water Quantity requested only in manual mode, in % (Data : core:ExpectedNumberOfShowerState / setExpectedNumberOfShower)
+    Widget_name = u'Expected Qty'+Device_name
+    DHWP_MBL[u'idx_ExpectedNumberOfShower']= domoticz_add_virtual_device_2(idx,u'0xF43E',Widget_name)
+    option = u'TGV2ZWxOYW1lczpPZmZ8NjAlfDcwJXw4MCV8OTAlfDEwMCU7TGV2ZWxBY3Rpb25zOnx8fHx8O1NlbGVjdG9yU3R5bGU6MDtMZXZlbE9mZkhpZGRlbjp0cnVl'
+    send=requests.get(u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=0&description=&idx='+(DHWP_MBL[u'idx_ExpectedNumberOfShower'])+'&name='+Widget_name+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
     
     # Log Domoticz :
     domoticz_write_log(u"Cozytouch : creation "+Device_name+u" ,url: "+url)
@@ -2063,6 +2051,13 @@ def maj_device(data,name,p,x):
         # Number of showers remaining (core:NumberOfShowerRemainingState)
         domoticz_write_device_analog((value_by_name(data,x,u'core:NumberOfShowerRemainingState')),(classe.get(u'idx_NumberOfShowerRemainingState')))
 
+        # Expected Hot water Quantity requested only in manual mode, in % selector (60% (1 is sent),70% (2 is sent),80% (3 is sent),90% 4 is sent),100% (5 is sent))
+        # (Data : core:ExpectedNumberOfShowerState / setExpectedNumberOfShower)
+        gestion_switch_selector_domoticz (value_by_name(data,x,u'core:ExpectedNumberOfShowerState'),classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_ExpectedNumberOfShower'),
+                                                     level_10='1',level_20='2',level_30='3',level_40='4',level_50='5',
+                                                     setting_command_mode='setExpectedNumberOfShower',command_activate=True)
+        
+
         # Mode selector (auto/eco/manual) (Data : modbuslink:DHWModeState / setDHWMode)
         gestion_switch_selector_domoticz (value_by_name(data,x,u'modbuslink:DHWModeState'),classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_Mode'),
                                                      level_0='autoMode',level_10='manualEcoInactive',level_20='manualEcoActive',
@@ -2070,7 +2065,7 @@ def maj_device(data,name,p,x):
 
         # Boost selector (Data : modbuslink:DHWBoostModeState / setBoostMode)
         gestion_switch_selector_domoticz (value_by_name(data,x,u'modbuslink:DHWBoostModeState'),classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_DHWBoostModeState'),
-                                                     level_0='off',level_10='on',level_20='prog',
+                                                     level_0='off',level_10='on',
                                                      setting_command_mode='setBoostMode',command_activate=True)
 
         # Absence selector (Data : modbuslink:DHWAbsenceModeState / setAbsenceMode)
@@ -2083,11 +2078,11 @@ def maj_device(data,name,p,x):
             # 1-Reading actual system time
             dt=datetime.datetime.now()
             # 2-Building JSON data with start time, equal to actual time
-            start_time = json.dumps({"hour":dt.hour,"month":dt.hour,"second":dt.second,"weekday":dt.weekday(),"year":dt.year,"day":dt.day,"minute":dt.minute})
+            start_time = json.dumps({"hour":dt.hour,"month":dt.month,"second":dt.second,"weekday":dt.weekday(),"year":dt.year,"day":dt.day,"minute":dt.minute})
             # 2-Sending Start Date
             cozytouch_POST(classe.get(u'url'),u'setAbsenceStartDate',start_time)
             # 3-Building JSON data with end time, equal to start time + 1year
-            end_time = json.dumps({"hour":dt.hour,"month":dt.hour,"second":dt.second,"weekday":dt.weekday(),"year":dt.year+1,"day":dt.day,"minute":dt.minute})
+            end_time = json.dumps({"hour":dt.hour,"month":dt.month,"second":dt.second,"weekday":dt.weekday(),"year":dt.year+1,"day":dt.day,"minute":dt.minute})
             # Time sleep
             time.sleep(0.3)
             # 4-Sending End Date
