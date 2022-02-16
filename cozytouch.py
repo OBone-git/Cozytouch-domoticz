@@ -1317,7 +1317,7 @@ def add_DHWP_MBL (idx,liste,url,x,label):
     option = u'TGV2ZWxOYW1lczpBdXRvfE1hbnVhbDtMZXZlbEFjdGlvbnM6fDtTZWxlY3RvclN0eWxlOjA7TGV2ZWxPZmZIaWRkZW46ZmFsc2U%3D'
     send=requests.get(u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(DHWP_MBL[u'idx_Mode'])+'&name='+Widget_name+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
 
-    # Add :Temperature of water (modbuslink:MiddleWaterTemperatureState)
+    # Add : Temperature of water (modbuslink:MiddleWaterTemperatureState)
     Widget_name = u'Middle Temp '+Device_name
     DHWP_MBL [u'idx_MiddleWaterTemperatureState']= domoticz_add_virtual_device(idx,80,Widget_name)
 
@@ -1367,6 +1367,24 @@ def add_DHWP_MBL (idx,liste,url,x,label):
     # Setting widget
     option = u'TGV2ZWxOYW1lczpPZmZ8T247TGV2ZWxBY3Rpb25zOnw7U2VsZWN0b3JTdHlsZTowO0xldmVsT2ZmSGlkZGVuOmZhbHNl'
     send=requests.get(u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=0&description=&idx='+(DHWP_MBL[u'idx_DHWAbsenceModeState'])+'&name='+Widget_name+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
+
+    # Add : Number of showers (water qty in %) selector (Data : core:ExpectedNumberOfShowerState / setExpectedNumberOfShower)
+    # Value prend la valeur 1 pour 60 %, 2 pour 70 %, 3 pour 80 %, 4 pour 90 % et 5 pour 100
+    # Créer un switch selector avec des boutons : 60. 70, 80, 90 et 100 %
+    # Sous Cozytouch, le switch n'a d'interet qu'en mode manuel sur Cozytouch : ("name": "modbuslink:DHWModeState","value": "manualEcoInactive")
+    
+
+
+    
+    # Switch selecteur durée absence :
+    # nom_switch = u'Duree absence (jours) '+nom
+    # PAC_zone_component[u'idx_away_duration']= domoticz_add_virtual_device(idx,1002,nom_switch)
+    # Personnalisation du switch (Modification du nom des levels et de l'icone
+    # option = u'TGV2ZWxOYW1lczowfDF8MnwzfDR8NXw2fDc7TGV2ZWxBY3Rpb25zOnx8fHx8fHw7U2VsZWN0b3JTdHlsZTowO0xldmVsT2ZmSGlkZGVuOmZhbHNl'
+    # send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(PAC_zone_component['idx_away_duration'])+'&name='+nom_switch+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
+
+
+
     
     # Log Domoticz :
     domoticz_write_log(u"Cozytouch : creation "+Device_name+u" ,url: "+url)
@@ -1381,8 +1399,8 @@ def add_DHWP_MBL (idx,liste,url,x,label):
 def add_DHWP_MBL_CEEC (idx,liste,url,x,label):
     ''' Add CumulativeElectricPowerConsumptionSensor
     '''
-    # Création du nom suivant la position JSON du device dans l'API Cozytouch
-    Device_name= u'Energy '+label
+    # Création du nom, celui contenu dans le JSON n'est pas compatible avec Domoticz (Modbuslink1#2)
+    Device_name= u'Energy MBL'
 	
     # Création du dictionnaire de définition du device
     DHWP_MBL_CEEC = {}
