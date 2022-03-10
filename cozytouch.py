@@ -1372,7 +1372,7 @@ def add_DHWP_MBL (idx,liste,url,x,label):
     Widget_name = u'Expected Qty'+Device_name
     DHWP_MBL[u'idx_ExpectedNumberOfShower']= domoticz_add_virtual_device_2(idx,u'0xF43E',Widget_name)
     option = u'TGV2ZWxOYW1lczpPZmZ8NjAlfDcwJXw4MCV8OTAlfDEwMCU7TGV2ZWxBY3Rpb25zOnx8fHx8O1NlbGVjdG9yU3R5bGU6MDtMZXZlbE9mZkhpZGRlbjp0cnVl'
-    send=requests.get(u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=11&description=&idx='+(DHWP_MBL[u'idx_ExpectedNumberOfShower'])+'&name='+Widget_name+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
+    send=requests.get(u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=0&description=&idx='+(DHWP_MBL[u'idx_ExpectedNumberOfShower'])+'&name='+Widget_name+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
     
     # Log Domoticz :
     domoticz_write_log(u"Cozytouch : creation "+Device_name+u" ,url: "+url)
@@ -1388,7 +1388,7 @@ def add_DHWP_MBL_CEEC (idx,liste,url,x,label):
     ''' Add CumulativeElectricPowerConsumptionSensor
     '''
     # Création du nom, celui contenu dans le JSON n'est pas compatible avec Domoticz (Modbuslink1#2)
-    Widget_name= u'Energy MBL'
+    Device_name= u'Energy MBL'
 	
     # Création du dictionnaire de définition du device
     DHWP_MBL_CEEC = {}
@@ -1397,6 +1397,7 @@ def add_DHWP_MBL_CEEC (idx,liste,url,x,label):
     DHWP_MBL_CEEC [u'nom']= Device_name
     
     # Add : CumulativeElectricPowerConsumptionSensor (core:ElectricEnergyConsumptionState)
+    Widget_name = u'Energy '+Device_name
     DHWP_MBL_CEEC[u'idx_ElectricEnergyConsumptionState']= domoticz_add_virtual_device(idx,113,Widget_name)
     
     # Log Domoticz :
@@ -2053,7 +2054,7 @@ def maj_device(data,name,p,x):
         # Expected Hot water Quantity requested only in manual mode, in % selector (60% (1 is sent),70% (2 is sent),80% (3 is sent),90% 4 is sent),100% (5 is sent))
         # (Data : core:ExpectedNumberOfShowerState / setExpectedNumberOfShower)
         gestion_switch_selector_domoticz (value_by_name(data,x,u'core:ExpectedNumberOfShowerState'),classe.get(u'url'),classe.get(u'nom'),classe.get(u'idx_ExpectedNumberOfShower'),
-                                                     level_10=1,level_20=2,level_30=3,level_40=4,level_50=5,
+                                                     level_10='1',level_20='2',level_30='3',level_40='4',level_50='5',
                                                      setting_command_mode='setExpectedNumberOfShower',command_activate=True)
         
 
