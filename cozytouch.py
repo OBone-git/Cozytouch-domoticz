@@ -72,7 +72,7 @@ global url_cozytouchlog, url_cozytouch, url_domoticz, url_atlantic, cookies, url
 url_cozytouchlog=u'https://ha110-1.overkiz.com/enduser-mobile-web/enduserAPI'
 url_cozytouch=u'https://ha110-1.overkiz.com/enduser-mobile-web/externalAPI/json/'
 url_domoticz=u'http://'+domoticz_ip+u':'+domoticz_port+u'/json.htm?type='
-url_atlantic=u'https://api.groupe-atlantic.com'
+url_atlantic=u'https://apis.groupe-atlantic.com'
 
 current_path=os.path.dirname(os.path.abspath(__file__)) # repertoire actuel
 cozytouch_save = current_path+'/cozytouch_save'
@@ -393,7 +393,7 @@ def cozytouch_login(login,password):
 
     headers={
     'Content-Type':'application/x-www-form-urlencoded',
-    'Authorization':'Basic czduc0RZZXdWbjVGbVV4UmlYN1pVSUM3ZFI4YTphSDEzOXZmbzA1ZGdqeDJkSFVSQkFTbmhCRW9h'
+    'Authorization':'Basic Q3RfMUpWeVRtSUxYOEllZkE3YVVOQmpGblpVYToyRWNORHpfZHkzNDJVSnFvMlo3cFNKTnZVdjBh'
         }
     data={
         'grant_type':'password',
@@ -409,7 +409,7 @@ def cozytouch_login(login,password):
     headers={
     'Authorization':'Bearer '+atlantic_token+''
         }
-    reqjwt=requests.get(url_atlantic+'/gacoma/gacomawcfservice/accounts/jwt',headers=headers)
+    reqjwt=requests.get(url_atlantic+'/magellan/accounts/jwt',headers=headers)
 
     jwt=reqjwt.content.replace('"','')
     data={
