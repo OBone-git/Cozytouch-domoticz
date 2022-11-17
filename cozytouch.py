@@ -397,7 +397,7 @@ def cozytouch_login(login,password):
         }
     data={
         'grant_type':'password',
-        'username':login,
+        'username':'GA-PRIVATEPERSON/' + login,
         'password':password
         }
 
