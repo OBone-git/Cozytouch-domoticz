@@ -392,7 +392,8 @@ def var_save(var, var_str):
     else :
         d[var_str] = 0 # init variable
         d[var_str] = var
-        d.close()
+
+    d.close()
 
 def var_restore(var_str,format_str =False ):
     '''Fonction de restauration
