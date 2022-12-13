@@ -29,6 +29,7 @@
 # PAC : AJOUTER LE MODE ECO OU CONFORT EN MODE PROG SUR LES ZONES
 
 import requests, shelve, json, time, unicodedata, os, sys, errno
+import ma_config
 
 
 '''
@@ -42,8 +43,6 @@ debug=1 # 0 : pas de traces debug / 1 : traces requêtes http / 2 : dump data js
 domoticz_ip=u'192.168.xx.xx'
 domoticz_port=u'8080'
 
-login="xxxxx"
-password="xxxxx"
 
 '''
 Commentaires
@@ -1983,7 +1982,7 @@ if test_exist_cozytouch_domoticz_hw_and_backup_store():
         # Tentative de login au serveur Cozytouch
         print("!!!! Echec interrogation serveur Cozytouch sans login, connexion serveur Cozytouch ****")
 
-        if cozytouch_login(login,password):
+        if cozytouch_login(ma_config.login, ma_config.password):
             print("Connexion serveur Cozytouch reussie")
 
         else:
