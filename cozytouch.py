@@ -12,7 +12,9 @@
 
 # modification : allstar71 10/21 : Correction authentification/connexion suite MAJ serveur
 # modification : OBone 11/21 : Ajout 'io:AtlanticPassAPCHeatPumpMainComponent','io:AtlanticPassAPCHeatingAndCoolingZoneComponent','io:AtlanticPassAPCOutsideTemperatureSensor','io:AtlanticPassAPCZoneTemperatureSensor','io:TotalElectricalEnergyConsumptionSensor'.
+# modification : tatrox 01/22 : ajout consigne de dérogation pour les radiateurs électriques
 # modification : tatrox 01/22 : Ajout classe ['DHWP_THERM_V4_CETHI_IO']="io:AtlanticDomesticHotWaterProductionV2_CETHI_V4_IOComponent" (chauffe eau thermodynamique Atlantic Calypso)
+
 
 # TODO list:
 # Prise en compte du mode dérogation sur les AtlanticElectricalHeaterWithAdjustableTemperatureSetpointIOComponent
@@ -24,14 +26,21 @@
 
 import requests, shelve, json, time, unicodedata, os, sys, errno
 
+
 '''
 Paramètres
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 '''
+version=5.34
 
+debug=1 # 0 : pas de traces debug / 1 : traces requêtes http / 2 : dump data json reçues du serveur cozytouch
+
+domoticz_ip=u'192.168.xx.xx'
 domoticz_port=u'8080'
 
 
+login="xxxxx"
+password="xxxxx"
 
 
 
@@ -60,10 +69,10 @@ Variables globlales
 
 global url_cozytouchlog, url_cozytouch, url_domoticz, url_atlantic, cookies, url_domoticz, cozytouch_save, current_path
 
+url_cozytouchlog=u'https://ha110-1.overkiz.com/enduser-mobile-web/enduserAPI'
 url_cozytouch=u'https://ha110-1.overkiz.com/enduser-mobile-web/externalAPI/json/'
 url_domoticz=u'http://'+domoticz_ip+u':'+domoticz_port+u'/json.htm?type='
 url_atlantic=u'https://apis.groupe-atlantic.com'
-url_atlantic=u'https://api.groupe-atlantic.com'
 
 current_path=os.path.dirname(os.path.abspath(__file__)) # repertoire actuel
 cozytouch_save = current_path+'/cozytouch_save'
@@ -385,12 +394,10 @@ def cozytouch_login(login,password):
     headers={
     'Content-Type':'application/x-www-form-urlencoded',
     'Authorization':'Basic Q3RfMUpWeVRtSUxYOEllZkE3YVVOQmpGblpVYToyRWNORHpfZHkzNDJVSnFvMlo3cFNKTnZVdjBh'
-    'Authorization':'Basic czduc0RZZXdWbjVGbVV4UmlYN1pVSUM3ZFI4YTphSDEzOXZmbzA1ZGdqeDJkSFVSQkFTbmhCRW9h'
         }
     data={
         'grant_type':'password',
         'username':'GA-PRIVATEPERSON/' + login,
-        'username':login,
         'password':password
         }
 
@@ -403,14 +410,15 @@ def cozytouch_login(login,password):
     'Authorization':'Bearer '+atlantic_token+''
         }
     reqjwt=requests.get(url_atlantic+'/magellan/accounts/jwt',headers=headers)
-    reqjwt=requests.get(url_atlantic+'/gacoma/gacomawcfservice/accounts/jwt',headers=headers)
 
     jwt=reqjwt.content.replace('"','')
     data={
         'jwt':jwt
         }
+    jsession=requests.post(url_cozytouchlog+'/login',data=data)
 
     if debug:
+        print(' POST-> '+url_cozytouchlog+"/login | userId=****&userPassword=**** : "+str(jsession.status_code))
 
     if jsession.status_code==200 : # Réponse HTTP 200 : OK
         print("Authentification serveur cozytouch OK")
@@ -431,6 +439,7 @@ def cozytouch_GET(json):
     'Host' : "ha110-1.overkiz.com",
     'Connection':"Keep-Alive",
     }
+    myurl=url_cozytouch+json
     cookies=var_restore('cookies')
     req = requests.get(myurl,headers=headers,cookies=cookies)
     if debug:
@@ -571,12 +580,14 @@ def read_label_from_cozytouch(data,x,oid='none'):
 
     # Lecture du nom lorsqu'il est placé directement dans l'architecture du device
     if oid=='none' :
+        label=data[u'setup'][u'devices'][x][u'label']
 
     # Lecture du nom du device lorsqu'il est placé sous l'architecture 'rootplace'
     # On cherche le numéro 'oid' correspondant au device pour récupérer le nom
     else :
         # Init variable
         y=0
+        z=(data[u'setup'][u'rootPlace'][u'subPlaces'])
         while True:
             try :
                 oid_subplace=(z[y][u'oid'])
@@ -599,10 +610,22 @@ def decouverte_devices():
     print("**** Decouverte devices ****")
 
     # Renvoi toutes les données du cozytouch
+    data = cozytouch_GET('getSetup')
 
     if debug==2:
+	    f1=open('./dump_cozytouch.txt', 'w+')
 	    f1.write((json.dumps(data, indent=4, separators=(',', ': '))))
 	    f1.close()
+
+
+    # Lecture données Gateway Cozytouch (pour info)
+    select=(data[u'setup'][u'gateways'][0])
+    if select[u'alive']:
+        cozytouch_gateway_etat="on"
+    else:
+        cozytouch_gateway_etat="off"
+    if debug:
+        print("\nGateway Cozytouch : etat "+cozytouch_gateway_etat+" / connexion : "+select[u'connectivity'][u'status']+" / version : "+str(select[u'connectivity'][u'protocolVersion']))
 
     # Restauration de la liste des devices
     save_devices = var_restore('save_devices')
@@ -624,6 +647,7 @@ def decouverte_devices():
         oid = 0
 
         # On boucle sur chaque device trouvé :
+        for a in data[u'setup'][u'devices']:
             url = a[u'deviceURL']
             name = a[u'controllableName']
             oid = a[u'placeOID']
@@ -634,6 +658,7 @@ def decouverte_devices():
                p+=1 # incrément position dans dictionnaire des devices
 
             elif name == dict_cozytouch_devtypes.get(u'chauffe eau'):
+                liste = ajout_chauffe_eau (save_idx,liste,url,x,(data[u'setup'][u'rootPlace'][u'label'])) # label rootplace
                 p+=1
 
             elif name == dict_cozytouch_devtypes.get(u'module fil pilote'):
@@ -649,6 +674,7 @@ def decouverte_devices():
                 p+=1
 
             elif name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V3_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V2_MURAL_IO') or name == dict_cozytouch_devtypes.get(u'DHWP_THERM_V4_CETHI_IO'):
+                liste= Add_DHWP_THERM (save_idx,liste,url,x,(data[u'setup'][u'rootPlace'][u'label']),name) # label sur rootplace
                 p+=1
 
             elif name == dict_cozytouch_devtypes.get(u'bridge cozytouch'):
@@ -698,6 +724,7 @@ def decouverte_devices():
         x = 0
         p = 0
         # On boucle sur chaque device trouvé :
+        for a in data[u'setup'][u'devices']:
             url = a[u'deviceURL']
             name = a[u'controllableName']
 
@@ -766,6 +793,7 @@ def ajout_radiateur(idx,liste,url,x,label):
     # Consigne de dérogation valable en mode auto, applique une consigne de dérogation commande :"setDerogatedTargetTemperature" + température souhaité
     # Fonctionnement de la dérogation : En mode auto, si on applique uen consigne > à la consigne en cours (eco ou confort), on applique la dérogation (retour d'état pour savoir si on est dérogation? pas trouvé encore)
     # POur annuler la dérogation il faut appliquer la consigne qui doit etre en cours soit eco ou confort suivant le mode du radiateur,
+    # Attention le radiateur n'accepte pas une consigne de dérogation inférieure à la consigne qui doit etre appliquée (eco ou confort)
 
     # Création Mesure température :
     nom_mesure = u'T°C '+nom
@@ -814,6 +842,7 @@ def ajout_module_fil_pilote(idx,liste,url,x,label):
     module_fil_pilote[u'idx_switch']= domoticz_add_virtual_device(idx,1002,nom)
     # Personnalisation du switch(Modification du nom des levels et de l'icone)
     option = u'TGV2ZWxOYW1lczpPZmZ8SG9ycyBnZWx8RWNvfENvbmZvcnQgLTJ8Q29uZm9ydCAtMXxDb25mb3J0O0xldmVsQWN0aW9uczp8fHx8fDtTZWxlY3RvclN0eWxlOjE7TGV2ZWxPZmZIaWRkZW46ZmFsc2U%3D&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true'
+    myurl=u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+module_fil_pilote[u'idx_switch']+u'&name='+nom_switch+u'+&options='+option
     req=requests.get(myurl)
     if debug:
         print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
@@ -1325,6 +1354,7 @@ def gestion_consigne(texte,url_device,nom_device, idx_cons_domoticz, cons_device
         if debug:
             print('Fonction gestion_consigne : Rafraichissement consigne : '+(nom_device.encode("utf-8"))+'/'+(texte.encode("utf-8"))+'/'+str(cons_device)+'°C')
         domoticz_write_device_analog(cons_device,idx_cons_domoticz)
+        var_save(cons_device, ('save_consigne_'+(nom_device.encode("utf-8"))+idx_cons_domoticz))
 
 
 def gestion_switch_selector_domoticz (cozytouch_mode_actual, url_device, nom_device, idx_switch_domoticz,state_cozytouch_on_off='no',
@@ -1453,8 +1483,10 @@ def gestion_switch_selector_domoticz (cozytouch_mode_actual, url_device, nom_dev
 
     
 def value_by_name(data,device,item):
+    for state in data['setup']['devices'][device]['states']:
         if state['name'] == item:
             return state['value']
+    print('Failed to retrieve value '+item+' for device '+data['setup']['devices'][device]['widget'])
     return None
 
 
@@ -1864,6 +1896,7 @@ if test_exist_cozytouch_domoticz_hw_and_backup_store():
 
     # Test d'une requete GET pour voir si on peut se connecter avec l'ancien cookie et éviter le login
     print("**** Tentative interrogation serveur Cozytouch sans login, avec cookie login précédent ****")
+    if cozytouch_GET('refreshAllStates'):
         print( "Requete de test sans login reussie, bypass login\n")
     else:
         # Tentative de login au serveur Cozytouch
@@ -1877,6 +1910,8 @@ if test_exist_cozytouch_domoticz_hw_and_backup_store():
             sys.exit(errno.ECONNREFUSED)
 
         # Rafraichissement états
+        if cozytouch_GET('refreshAllStates'):
+            print("Requete refreshAllStates reussie")
         else:
             print("!!!! Echec requete refreshAllStates")
             sys.exit(errno.EPROTO)
@@ -1887,3 +1922,4 @@ if test_exist_cozytouch_domoticz_hw_and_backup_store():
 
 else:
     print("!!!! Echec test presence fichier de sauvegarde cozytouch et virtual hardware domoticz")
+    sys.exit(errno.ENOENT)
