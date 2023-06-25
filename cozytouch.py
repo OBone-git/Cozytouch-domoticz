@@ -16,6 +16,7 @@
 # modification : tatrox 01/22 : Ajout classe ['DHWP_THERM_V4_CETHI_IO']="io:AtlanticDomesticHotWaterProductionV2_CETHI_V4_IOComponent" (chauffe eau thermodynamique Atlantic Calypso)
 # modification : 5.35 : tatrox 06/23 : changements adresse API et lecture des données renvoyées
 # modification : 5.36 : tatrox 06/23 : ajout de vérification de version pour mettre à jour le hardware dans domoticz si c'est une version mineure
+                                      #add log error level for domoticz
 
 # TODO list:
 # Prise en compte du mode dérogation sur les AtlanticElectricalHeaterWithAdjustableTemperatureSetpointIOComponent
@@ -110,10 +111,10 @@ Fonctions génériques pour Domoticz
 **********************************************************
 '''
 
-def domoticz_write_log(message):
+def domoticz_write_log(message,level='2'):
     """Fonction d'ecriture log dans Domoticz
     """
-    myurl=url_domoticz+u'command&param=addlogmessage&message='+message
+    myurl=url_domoticz+u'command&param=addlogmessage&message='+message+u'&level='+level
     req=requests.get(myurl)
     if debug:
         print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
