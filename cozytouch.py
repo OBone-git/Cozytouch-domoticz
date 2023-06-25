@@ -15,6 +15,7 @@
 # modification : tatrox 01/22 : ajout consigne de dérogation pour les radiateurs électriques
 # modification : tatrox 01/22 : Ajout classe ['DHWP_THERM_V4_CETHI_IO']="io:AtlanticDomesticHotWaterProductionV2_CETHI_V4_IOComponent" (chauffe eau thermodynamique Atlantic Calypso)
 # modification : 5.35 : tatrox 06/23 : changements adresse API et lecture des données renvoyées
+# modification : 5.36 : tatrox 06/23 : ajout de vérification de version pour mettre à jour le hardware dans domoticz si c'est une version mineure
 
 # TODO list:
 # Prise en compte du mode dérogation sur les AtlanticElectricalHeaterWithAdjustableTemperatureSetpointIOComponent
@@ -31,7 +32,7 @@ import requests, shelve, json, time, unicodedata, os, sys, errno
 Paramètres
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 '''
-version=5.35
+version=5.36 # version=majeure.mineure : Si update de version mineure alors le hardware sera mis à jour avec la nouvelle version. Sinon création d'un nouveau hardware
 
 debug=1 # 0 : pas de traces debug / 1 : traces requêtes http / 2 : dump data json reçues du serveur cozytouch
 
@@ -295,6 +296,20 @@ def domoticz_rename_device(idx, nom):
         http_error(req.status_code,req.reason) # Appel fonction sur erreur HTTP
     return req.status_code
 
+def domoticz_rename_hardware(idx, nom):
+    ''' renomme un hardware dans domoticz
+    '''
+    idx = str(idx)
+    nom = str(nom)
+    # renomme un device domoticz
+    myurl=url_domoticz+'command&param=updatehardware&htype=15'+'&enabled=true'+'&idx='+idx+'&name='+nom
+    req=requests.get(myurl)
+    if debug:
+        print(('  '.join(('GET-> ',myurl,' : ',str(req.status_code)))))
+    if (req.status_code != 200):
+        http_error(req.status_code,req.reason) # Appel fonction sur erreur HTTP
+    return req.status_code
+
 def domoticz_add_virtual_harware():
     ''' Fonction de création du virtual hardware (matériel/dummy)
     '''
@@ -524,11 +539,43 @@ def test_exist_cozytouch_domoticz_hw_and_backup_store():
                         data[u'result'][y]['idx']
                         a=data[u'result'][y]['idx']
 
-                        if a==save_idx and data[u'result'][y][u'Name']=='Cozytouch_V'+str(version):
-                            reset=False
-                            print('idx hardware cozytouch dans domoticz : '+str(a))
-                            break
-
+                        if a==save_idx :
+                            #le device sauvegardé a été trouvé, on regarde si on le met à jour ou si on en crée un nouveau dans le cadre d'une nouvelle version majeure
+                            #récupération version sauvegardée
+                            versionactuelle=data[u'result'][y][u'Name'].split("V")
+                            versionactuellemajor=versionactuelle[1]
+                            versionactuellemajor=versionactuellemajor.split(".")
+                            versionactuellemajor=versionactuellemajor[0]
+                            versionactuelleminor=versionactuelle[1]
+                            versionactuelleminor=versionactuelleminor.split(".")
+                            versionactuelleminor=versionactuelleminor[1]
+                            #récupération version cible
+                            versionciblemajor=str(version).split(".")
+                            versionciblemajor=versionciblemajor[0]
+                            versioncibleminor=str(version).split(".")
+                            versioncibleminor=versioncibleminor[1]
+                            if debug:
+                                print (u'version actuelle : '+ str(versionactuellemajor) + u'.' + str(versionactuelleminor) + u' version cible : ' + str(versionciblemajor)+ u'.' + str(versioncibleminor))
+                            if data[u'result'][y][u'Name']=='Cozytouch_V'+str(version) :
+                                #pas de changement de script cozytouch.py
+                                reset=False
+                                if debug:
+                                    print(u'idx hardware cozytouch dans domoticz : '+str(a))
+                                break
+                            elif (int(versionactuellemajor)>=5 & int(versionactuellemajor)==int(versionciblemajor)) :
+                                #si update de version mineure alors mise à jour du hardware dans domoticz (valable à partir de la version majeure 5.xx)
+                                reset=False
+                                nouveaunom='Cozytouch_V'+str(version)
+                                if debug:
+                                    print(u'domoticz_rename_hardware : ' + str(save_idx) + u' ' + str(nouveaunom))
+                                domoticz_rename_hardware(save_idx,nouveaunom)
+                                break
+                            else :
+                                #si update de version majeure alors mise à jour du hardware dans domoticz
+                                if debug:
+                                    print(u'Update de version majeure')
+                                reset=True
+                                break
                         elif a != save_idx:
                             y+=1
                             continue
@@ -537,6 +584,7 @@ def test_exist_cozytouch_domoticz_hw_and_backup_store():
                             reset=True
                             break
                     except:
+                        print(u'**** Exception a la lecture de la configuration cozytouch ****')
                         reset=True
                         break
             else :
@@ -623,7 +671,7 @@ def decouverte_devices():
     if debug:
         print("\nGateway Cozytouch : etat "+cozytouch_gateway_etat+" / connexion : "+select[u'connectivity'][u'status']+" / version : "+str(select[u'connectivity'][u'protocolVersion']))
 
-	# Restauration de la liste des devices
+    # Restauration de la liste des devices
     save_devices = var_restore('save_devices')
     # Restauration de l'idx hardware cozytouch dans domoticz
     save_idx = var_restore('save_idx')
