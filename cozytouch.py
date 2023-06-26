@@ -17,6 +17,7 @@
 # modification : 5.35 : tatrox 06/23 : changements adresse API et lecture des données renvoyées
 # modification : 5.36 : tatrox 06/23 : ajout de vérification de version pour mettre à jour le hardware dans domoticz si c'est une version mineure
                                       #add log error level for domoticz
+                                      #changements mineurs pour la compréhension + ajout de quelques options de debug
 
 # TODO list:
 # Prise en compte du mode dérogation sur les AtlanticElectricalHeaterWithAdjustableTemperatureSetpointIOComponent
@@ -35,7 +36,7 @@ Paramètres
 '''
 version=5.36 # version=majeure.mineure : Si update de version mineure alors le hardware sera mis à jour avec la nouvelle version. Sinon création d'un nouveau hardware
 
-debug=1 # 0 : pas de traces debug / 1 : traces requêtes http / 2 : dump data json reçues du serveur cozytouch
+debug=1 # 0 : pas de traces debug / 1 : traces requêtes http / 2 : dump data json reçues du serveur cozytouch / 4 : dump data device sauvegardés / 555 : pour lier manuellement les devices déjà existants en cas de suppresion malencontreuse du cozytouch_save mais pas des devices
 
 domoticz_ip=u'192.168.xx.xx'
 domoticz_port=u'8080'
@@ -311,51 +312,67 @@ def domoticz_rename_hardware(idx, nom):
         http_error(req.status_code,req.reason) # Appel fonction sur erreur HTTP
     return req.status_code
 
-def domoticz_add_virtual_harware():
+def domoticz_add_virtual_hardware():
     ''' Fonction de création du virtual hardware (matériel/dummy)
     '''
 
-    myurl=url_domoticz+'command&param=addhardware&htype=15&port=1&name=Cozytouch_V'+str(version)+'&enabled=true'
-    req=requests.get(myurl)
-    if debug:
-        print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
+    if debug==555: #remplissage manuel
+        idx=str(input("idx manuel hardware : "))
+    else:
+        myurl=url_domoticz+'command&param=addhardware&htype=15&port=1&name=Cozytouch_V'+str(version)+'&enabled=true'
+        req=requests.get(myurl)
+        if debug:
+            print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
 
-    # Réponse HTTP 200 OK
-    if req.status_code==200 :
-        data=json.loads(req.text)
-        # Lecture de l'idx attribué
-        idx=(data[u'idx'])
-    else :
-        http_error(req.status_code,req.reason) # Appel fonction sur erreur HTTP
-        idx=0
+        # Réponse HTTP 200 OK
+        if req.status_code==200 :
+            data=json.loads(req.text)
+            print("data : "+str(data))
+            # Lecture de l'idx attribué
+
+            idx=(data[u'idx'])
+        else :
+            http_error(req.status_code,req.reason) # Appel fonction sur erreur HTTP
+            idx=0
+    
     print('    **** domoticz cozytouch hardware index : ',str(idx))
     return idx
 
-def domoticz_add_virtual_device(idx,typ,nom,option='none'):
+def domoticz_add_virtual_device(hwidx,typ,nom,option='none'):
     ''' Fonction de création de device virtuel
     '''
     if option == 'none' :
         req_option = ''
     else :
         req_option=u'&sensoroptions=1;'+option
-    idx = str(idx).decode("utf-8")
+    hwidx = str(hwidx).decode("utf-8")
     typ = str(typ).decode("utf-8")
 
-    myurl=url_domoticz+u'createvirtualsensor&idx='+idx+u'&sensorname='+nom+u'+&sensortype='+typ+req_option
-    req=requests.get(myurl)
-    if debug:
-        print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
+    if debug==555: #remplissage manuel
+        deviceidx=str(input("idx manuel device "+str(nom)+" : "))
+    else:
+        myurl=url_domoticz+u'createvirtualsensor&idx='+hwidx+u'&sensorname='+nom+u'+&sensortype='+typ+req_option
+        req=requests.get(myurl)
+        if debug:
+            print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
 
-    # Réponse HTTP 200 OK
-    if req.status_code==200 :
-        data=json.loads(req.text)
-        # Lecture de l'idx attribué
-        idx=(data[u'idx'])
-    else :
-        http_error(req.status_code,req.reason) # Appel fonction sur erreur HTTP
-        idx=0
-    print('    **** domoticz virtual vensor index : '+str(idx))
-    return idx
+        # Réponse HTTP 200 OK
+        if req.status_code==200 :
+            data=json.loads(req.text)
+            print("data : "+str(data))
+            # Lecture de l'idx attribué
+            if data['status']!='OK' :
+                domoticz_write_log('Cozytouch : Error creating device '+nom,'4')
+                deviceidx=0
+            else : 
+                deviceidx=(data[u'idx'])
+        else :
+            http_error(req.status_code,req.reason) # Appel fonction sur erreur HTTP
+            deviceidx=0
+
+    print('    **** domoticz virtual sensor index : '+str(deviceidx))
+    
+    return deviceidx
 
 '''
 **********************************************************
@@ -508,13 +525,13 @@ def test_exist_cozytouch_domoticz_hw_and_backup_store():
         d=shelve.open(cozytouch_save,'c')
         d.close()
 
-        idx = domoticz_add_virtual_harware() # création d'un hardware de type virtual dans domoticz
+        idx = domoticz_add_virtual_hardware() # création d'un hardware de type virtual dans domoticz
         if idx == 0:
             print("!!!! Echec creation hardware cozytouch dans domoticz")
             return False
 
         var_save(idx,'save_idx') # création du fichier de sauvegarde de la configuration Cozytouch, et stockage du numéro du hardware cozytouch
-        domoticz_write_log("Creation nouvelle configuration ...")
+        domoticz_write_log("Cozytouch : Creation nouvelle configuration ...")
         print("Hardware cozytouch dans domoticz et nouveau fichier de sauvegarde de la configuration crees")
 
     # Cas où le fichier est existant et virtual hardware de domoticz inexistant/supprimé
@@ -555,8 +572,6 @@ def test_exist_cozytouch_domoticz_hw_and_backup_store():
                             versionciblemajor=versionciblemajor[0]
                             versioncibleminor=str(version).split(".")
                             versioncibleminor=versioncibleminor[1]
-                            if debug:
-                                print (u'version actuelle : '+ str(versionactuellemajor) + u'.' + str(versionactuelleminor) + u' version cible : ' + str(versionciblemajor)+ u'.' + str(versioncibleminor))
                             if data[u'result'][y][u'Name']=='Cozytouch_V'+str(version) :
                                 #pas de changement de script cozytouch.py
                                 reset=False
@@ -565,6 +580,8 @@ def test_exist_cozytouch_domoticz_hw_and_backup_store():
                                 break
                             elif (int(versionactuellemajor)>=5 & int(versionactuellemajor)==int(versionciblemajor)) :
                                 #si update de version mineure alors mise à jour du hardware dans domoticz (valable à partir de la version majeure 5.xx)
+                                if debug:
+                                    print (u'version actuelle : '+ str(versionactuellemajor) + u'.' + str(versionactuelleminor) + u' version cible : ' + str(versionciblemajor)+ u'.' + str(versioncibleminor))
                                 reset=False
                                 nouveaunom='Cozytouch_V'+str(version)
                                 if debug:
@@ -608,7 +625,7 @@ def test_exist_cozytouch_domoticz_hw_and_backup_store():
 
                 # et création d'un hardware de type virtual dans domoticz
                 print("Ajout materiel Cozytouch et fichier Cozytouch_save...")
-                idx = domoticz_add_virtual_harware()
+                idx = domoticz_add_virtual_hardware()
                 if idx == 0:
                     print("!!!! Echec creation hardware cozytouch dans domoticz")
                     return False
@@ -658,7 +675,7 @@ def decouverte_devices():
     # Renvoi toutes les données du cozytouch
     data = cozytouch_GET('setup')
 
-    if debug==2:
+    if debug>=2:
 	    f1=open('./dump_cozytouch.txt', 'w+')
 	    f1.write((json.dumps(data, indent=4, separators=(',', ': '))))
 	    f1.close()
@@ -674,6 +691,9 @@ def decouverte_devices():
 
     # Restauration de la liste des devices
     save_devices = var_restore('save_devices')
+    if debug>=4 :
+        print("save devices : "+str(save_devices))
+
     # Restauration de l'idx hardware cozytouch dans domoticz
     save_idx = var_restore('save_idx')
 
@@ -755,6 +775,11 @@ def decouverte_devices():
 
         # Fin de la boucle :
         # Sauvegarde des devices ajoutés
+        if debug>=4:
+            f1=open('./cozytouch_domoticz_devices_idx.txt', 'w+')
+            f1.write((json.dumps(liste, indent=4, separators=(',', ': '))))
+            f1.close()
+        
         var_save(liste,'save_devices')
 
     '''
@@ -841,7 +866,7 @@ def ajout_radiateur(idx,liste,url,x,label):
     # Attention le radiateur n'accepte pas une consigne de dérogation inférieure à la consigne qui doit etre appliquée (eco ou confort)
 
     # Création Mesure température :
-    nom_mesure = u'T°C '+nom
+    nom_mesure = u'T C '+nom
     radiateur[u'idx_mesure_temp']= domoticz_add_virtual_device(idx,80,nom_mesure)
 
     # Création Consigne température Confort :
@@ -849,11 +874,11 @@ def ajout_radiateur(idx,liste,url,x,label):
     radiateur[u'idx_cons_temp_confort']= domoticz_add_virtual_device(idx,8,nom_cons_conf )
 
     # Création Consigne température Eco :
-    nom_cons_eco= u'Cons. éco '+nom
+    nom_cons_eco= u'Cons. eco '+nom
     radiateur[u'idx_cons_temp_eco']= domoticz_add_virtual_device(idx,8,nom_cons_eco)
 
     # Création Consigne température dérogation :
-    nom_cons_derog = u'Cons. dérogation '+nom 
+    nom_cons_derog = u'Cons. derogation '+nom 
     radiateur[u'idx_cons_temp_derogation']= domoticz_add_virtual_device(idx,8,nom_cons_derog ) 
 
     # Création Compteur d'énergie :
@@ -1140,7 +1165,7 @@ def Add_DHWP_THERM (idx,liste,url,x,label,name):
         send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?addjvalue=0&addjvalue2=0&customimage=2&description=&idx='+(DHWP_THERM['idx_water_estimation'])+'&name='+widget_name+'&switchtype=2&addjvalue=0&addjvalue2=0&used=true&options=')
 
     # Log Domoticz :
-    domoticz_write_log(u"Cozytouch : création "+nom+u" ,url: "+url)
+    domoticz_write_log(u"Cozytouch : creation "+nom+u" ,url: "+url)
 
     # ajout du dictionnaire dans la liste des device:
     liste.append(DHWP_THERM)
@@ -1373,7 +1398,7 @@ def gestion_consigne(texte,url_device,nom_device, idx_cons_domoticz, cons_device
                 domoticz_write_device_analog(cons_domoticz,idx_cons_domoticz) # Mise à jour de la consigne Domoticz
                 domoticz_write_log(u'Cozytouch - '+nom_device+u' : consigne '+texte+u' : consigne doit etre 2°C en dessous de la consigne confort ! ')
 
-                print "consigne abaissement éco Domoticz " + str(cons_domoticz_abais_eco)
+                print "consigne abaissement eco Domoticz " + str(cons_domoticz_abais_eco)
             cozytouch_POST(url_device,cde_name,cons_domoticz_abais_eco) # Envoi de la consigne limitée à Cozytouch
             var_save(cons_domoticz, ('save_consigne_'+(nom_device.encode("utf-8"))+idx_cons_domoticz)) # Sauvegarde consigne domoticz
         else :
@@ -1923,7 +1948,17 @@ def maj_device(data,name,p,x):
 Déroulement du script
 **********************************************************
 '''
-print("¤¤¤¤ Demarrage script cozytouch <=> domoticz version "+str(version)+" (debug :"+str(debug)+")")
+myurl='http://'+domoticz_ip+':'+domoticz_port+'/json.htm?type=command&param=getversion'
+req=requests.get(myurl) # renvoie la version domoticz
+if debug:
+    print(('  '.join(('GET-> ',myurl,' : ',str(req.status_code)))))
+
+if req.status_code==200 : #Réponse HTTP OK
+    data=json.loads(req.text)
+    if debug:
+        print(str(data))
+
+print(("¤¤¤¤ Demarrage script cozytouch "+str(version)+" (debug :"+str(debug)+")"))
 
 pvma = sys.version_info.major
 pvmi = sys.version_info.minor
