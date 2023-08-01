@@ -1,6 +1,8 @@
 # Cozytouch-domoticz
 Python script for read/write data between the cozytouch server and domoticz on rpi.
 
+# Cozytouch 5.37 and following versions only for domoticz version 2023.1 or newer 
+
 This script support these classes : <br>
 AtlanticPassAPCZoneControlMainComponent or AtlanticPassAPCHeatPumpMainComponent (new)  = Central element PAC : <br>
 AtlanticPassAPCZoneControlZoneComponent or AtlanticPassAPCHeatingAndCoolingZoneComponent (new) = PAC zone :
