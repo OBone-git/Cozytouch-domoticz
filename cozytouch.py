@@ -18,6 +18,7 @@
 # modification : 5.36 : tatrox 06/23 : ajout de vérification de version pour mettre à jour le hardware dans domoticz si c'est une version mineure
                                       #add log error level for domoticz
                                       #changements mineurs pour la compréhension + ajout de quelques options de debug
+# modification : 5.37 : Sirus10 / tatrox 07/23 : Mise à jour des fonctions deprecated dans Domoticz 2023.2
 
 # TODO list:
 # Prise en compte du mode dérogation sur les AtlanticElectricalHeaterWithAdjustableTemperatureSetpointIOComponent
@@ -34,7 +35,7 @@ import requests, shelve, json, time, unicodedata, os, sys, errno
 Paramètres
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 '''
-version=5.36 # version=majeure.mineure : Si update de version mineure alors le hardware sera mis à jour avec la nouvelle version. Sinon création d'un nouveau hardware
+version=5.37 # version=majeure.mineure : Si update de version mineure alors le hardware sera mis à jour avec la nouvelle version. Sinon création d'un nouveau hardware
 
 debug=1 # 0 : pas de traces debug / 1 : traces requêtes http / 2 : dump data json reçues du serveur cozytouch / 4 : dump data device sauvegardés / 555 : pour lier manuellement les devices déjà existants en cas de suppresion malencontreuse du cozytouch_save mais pas des devices
 
@@ -171,7 +172,7 @@ def domoticz_read_device_analog(idx):
     '''
     idx=str(idx)
 
-    myurl=url_domoticz+'devices&rid='+idx
+    myurl=url_domoticz+'command&param=getdevices&rid='+idx
     req=requests.get(myurl)
     if debug:
         print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
@@ -193,7 +194,7 @@ def domoticz_read_device_switch_selector(idx):
     '''
     idx = str(idx).decode("utf-8")
 
-    myurl=url_domoticz+u'devices&rid='+idx
+    myurl=url_domoticz+u'command&param=getdevices&rid='+idx
     req=requests.get(myurl)
     if debug:
         print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
@@ -351,7 +352,7 @@ def domoticz_add_virtual_device(hwidx,typ,nom,option='none'):
     if debug==555: #remplissage manuel
         deviceidx=str(input("idx manuel device "+str(nom)+" : "))
     else:
-        myurl=url_domoticz+u'createvirtualsensor&idx='+hwidx+u'&sensorname='+nom+u'+&sensortype='+typ+req_option
+        myurl=url_domoticz+u'command&param=createvirtualsensor&idx='+hwidx+u'&sensorname='+nom+u'+&sensortype='+typ+req_option
         req=requests.get(myurl)
         if debug:
             print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
@@ -540,7 +541,7 @@ def test_exist_cozytouch_domoticz_hw_and_backup_store():
         print("idx hardware cozytouch dans le fichier de sauvegarde de la configuration : "+str(save_idx))
 
         # Test si le virtual hardware existe avec le même numéro dans domoticz
-        myurl='http://'+domoticz_ip+':'+domoticz_port+'/json.htm?type=hardware'
+        myurl=url_domoticz+'command&param=gethardware'
         req=requests.get(myurl) # renvoie la liste du hardware domoticz
         if debug:
             print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
@@ -944,7 +945,7 @@ def ajout_chauffe_eau(idx,liste,url,x,label):
     chauffe_eau['idx_switch_auto_manu']= domoticz_add_virtual_device(idx,1002,nom)
     # Personnalisation du switch (Modification du nom des levels et de l'icone)
     option = 'TGV2ZWxOYW1lcyUzQUF1dG8lN0NNYW51JTdDTWFudStFY28lM0JMZXZlbEFjdGlvbnMlM0ElN0MlN0MlN0MlM0JTZWxlY3RvclN0eWxlJTNBMCUzQkxldmVsT2ZmSGlkZGVuJTNBZmFsc2UlM0I='
-    myurl='http://'+domoticz_ip+":"+domoticz_port+'/json.htm?type=setused&idx='+(chauffe_eau['idx_switch_auto_manu'])+'&name='+nom_switch+'&description=&strparam1=&strparam2=&protected=false&switchtype=18&customimage=15&used=true&addjvalue=0&addjvalue2=0&options='+option
+    myurl=url_domoticz+'setused&idx='+(chauffe_eau['idx_switch_auto_manu'])+'&name='+nom_switch+'&description=&strparam1=&strparam2=&protected=false&switchtype=18&customimage=15&used=true&addjvalue=0&addjvalue2=0&options='+option
     req=requests.get(myurl)
     if debug:
         print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
@@ -952,7 +953,7 @@ def ajout_chauffe_eau(idx,liste,url,x,label):
     # Switch on/off
     nom_switch_on_off = 'Etat '+nom
     chauffe_eau['idx_on_off']= domoticz_add_virtual_device(idx,6,nom_switch_on_off)
-    myurl='http://'+domoticz_ip+":"+domoticz_port+'/json.htm?type=setused&idx='+(chauffe_eau['idx_on_off'])+'&name='+nom_switch_on_off+'&description=&strparam1=&strparam2=&protected=false&switchtype=0&customimage=15&used=true&addjvalue=0&addjvalue2=0&options='
+    myurl=url_domoticz+'setused&idx='+(chauffe_eau['idx_on_off'])+'&name='+nom_switch_on_off+'&description=&strparam1=&strparam2=&protected=false&switchtype=0&customimage=15&used=true&addjvalue=0&addjvalue2=0&options='
     req=requests.get(myurl)
     if debug:
         print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
@@ -966,7 +967,7 @@ def ajout_chauffe_eau(idx,liste,url,x,label):
     chauffe_eau['idx_conso_eau']= domoticz_add_virtual_device(idx,1004,nom_compteur,option='litres')
 
     # Personnalisation du switch (Modification de l'icone)
-    myurl='http://'+domoticz_ip+":"+domoticz_port+'/json.htm?type=setused&idx='+(chauffe_eau['idx_conso_eau'])+'&name='+nom_compteur+'&description=&switchtype=2&addjvalue=0&used=true&options='
+    myurl=url_domoticz+'setused&idx='+(chauffe_eau['idx_conso_eau'])+'&name='+nom_compteur+'&description=&switchtype=2&addjvalue=0&used=true&options='
     req=requests.get(myurl)
     if debug:
         print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
@@ -976,7 +977,7 @@ def ajout_chauffe_eau(idx,liste,url,x,label):
     chauffe_eau['idx_compteur_pompe']= domoticz_add_virtual_device(idx,113,nom_mesure)
     # Personnalisation du switch (Modification du nom des levels et de l'icone)
     option = 'VmFsdWVRdWFudGl0eSUzQUglM0JWYWx1ZVVuaXRzJTNBSGV1cmVzJTNC'
-    myurl='http://'+domoticz_ip+":"+domoticz_port+'/json.htm?type=setused&idx='+(chauffe_eau['idx_compteur_pompe'])+'&name='+nom_compteur_pompe+'&switchtype=3&addjvalue=0&used=true&options='+option
+    myurl=url_domoticz+'setused&idx='+(chauffe_eau['idx_compteur_pompe'])+'&name='+nom_compteur_pompe+'&switchtype=3&addjvalue=0&used=true&options='+option
     req=requests.get(myurl)
     if debug:
         print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
@@ -1012,7 +1013,7 @@ def ajout_PAC_main_control  (idx,liste,url,x,label):
     PAC_main_control [u'idx_switch_mode']= domoticz_add_virtual_device(idx,1002,nom)
     # Personnalisation du switch (Modification du nom des levels et de l'icone)
     option = u'TGV2ZWxOYW1lczpPZmZ8Q2hhdWZmYWdlfFJlZnJvaWRpc3NlbWVudHxEw6lzaHVtaWRpZmljYXRldXJ8QXV0bztMZXZlbEFjdGlvbnM6fHx8fDtTZWxlY3RvclN0eWxlOjE7TGV2ZWxPZmZIaWRkZW46ZmFsc2U%3D&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true'
-    myurl=u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?type=setused&idx='+(PAC_main_control[u'idx_switch_mode'])+u'&name='+nom_switch+u'&description=&strparam1=&strparam2=&protected=false&switchtype=18&customimage=7&used=true&addjvalue=0&addjvalue2=0&options='+option
+    myurl=url_domoticz+u'setused&idx='+(PAC_main_control[u'idx_switch_mode'])+u'&name='+nom_switch+u'&description=&strparam1=&strparam2=&protected=false&switchtype=18&customimage=7&used=true&addjvalue=0&addjvalue2=0&options='+option
     req=requests.get(myurl)
     if debug:
         print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
@@ -1049,7 +1050,7 @@ def ajout_PAC_zone_control  (idx,liste,url,x,label):
     PAC_zone_control [u'idx_switch_mode']= domoticz_add_virtual_device(idx,1002,nom)
     # Personnalisation du switch (Modification du nom des levels et de l'icone)
     option = u'TGV2ZWxOYW1lczpPZmZ8TWFudWVsfEF1dG8gKFByb2cpO0xldmVsQWN0aW9uczp8fDtTZWxlY3RvclN0eWxlOjA7TGV2ZWxPZmZIaWRkZW46ZmFsc2U%3D'
-    myurl=u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?type=setused&idx='+(PAC_zone_control[u'idx_switch_mode'])+u'&name='+nom_switch+u'&description=&strparam1=&strparam2=&protected=false&switchtype=18&customimage=7&used=true&addjvalue=0&addjvalue2=0&options='+option
+    myurl=url_domoticz+u'setused&idx='+(PAC_zone_control[u'idx_switch_mode'])+u'&name='+nom_switch+u'&description=&strparam1=&strparam2=&protected=false&switchtype=18&customimage=7&used=true&addjvalue=0&addjvalue2=0&options='+option
     req=requests.get(myurl)
     if debug:
         print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
@@ -1101,14 +1102,14 @@ def Add_DHWP_THERM (idx,liste,url,x,label,name):
      # Switch on/off (OperatingModeCapabilitiesState)
     nom_switch_on_off = u'Etat chauffe '+nom
     DHWP_THERM[u'idx_on_off']= domoticz_add_virtual_device(idx,6,nom_switch_on_off)
-    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?type=setused&idx='+(DHWP_THERM['idx_on_off'])+'&name='+nom_switch_on_off+'&description=&strparam1=&strparam2=&protected=false&switchtype=0&customimage=15&used=true&addjvalue=0&addjvalue2=0&options=')
+    send=requests.get(url_domoticz+'setused&idx='+(DHWP_THERM['idx_on_off'])+'&name='+nom_switch_on_off+'&description=&strparam1=&strparam2=&protected=false&switchtype=0&customimage=15&used=true&addjvalue=0&addjvalue2=0&options=')
 
     # Compteur temps de fonctionnement pompe à chaleur (HeatPumpOperatingTimeState)
     nom_compteur_pompe = u'Compteur PAC '+nom
     DHWP_THERM['idx_compteur_pompe']= domoticz_add_virtual_device(idx,113,nom_compteur_pompe)
     # Personnalisation du switch (Modification du nom des levels et de l'icone
     option = 'VmFsdWVRdWFudGl0eTpIZXVyZXM7VmFsdWVVbml0czpIOw=='
-    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?type=setused&idx='+(DHWP_THERM['idx_compteur_pompe'])+'&name='+nom_compteur_pompe+'&description=&switchtype=3&addjvalue=0&used=true&options='+option)
+    send=requests.get(url_domoticz+'setused&idx='+(DHWP_THERM['idx_compteur_pompe'])+'&name='+nom_compteur_pompe+'&description=&switchtype=3&addjvalue=0&used=true&options='+option)
 
     # Compteur d'énergie (ElectricEnergyConsumptionState)
     nom_compteur= u'Energie '+nom
@@ -1119,7 +1120,7 @@ def Add_DHWP_THERM (idx,liste,url,x,label,name):
     DHWP_THERM[u'idx_cons_temp']= domoticz_add_virtual_device(idx,8,nom_cons_conf )
     # Création Compteur d'énergie :
     nom_compteur= u'Conso '+nom
-    DHWP_THERM[u'idx_compteur']= domoticz_add_virtual_device(idx,113,nom_compteur)
+    DHWP_THERM[u'idx_compteur']= domoticz_add_virtual_device(idx,113,nom_compteur) #non utilisé ensuite
     # Switch selecteur :
     nom_switch = u'Mode '+nom
     DHWP_THERM[u'idx_switch_mode']= domoticz_add_virtual_device(idx,1002,nom)
@@ -1190,7 +1191,7 @@ def ajout_PAC_HeatPump  (idx,liste,url,x,label):
     PAC_HeatPump [u'idx_switch_mode']= domoticz_add_virtual_device(idx,1002,nom)
     # Personnalisation du switch (Modification du nom des levels et de l'icone)
     option = u'TGV2ZWxOYW1lczpPZmZ8Q2hhdWZmYWdlfFJlZnJvaWRpc3NlbWVudHxEw6lzaHVtaWRpZmljYXRldXJ8QXV0bztMZXZlbEFjdGlvbnM6fHx8fDtTZWxlY3RvclN0eWxlOjE7TGV2ZWxPZmZIaWRkZW46ZmFsc2U%3D&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true'
-    myurl=u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?type=setused&idx='+(PAC_HeatPump[u'idx_switch_mode'])+u'&name='+nom_switch+u'&description=&strparam1=&strparam2=&protected=false&switchtype=18&customimage=7&used=true&addjvalue=0&addjvalue2=0&options='+option
+    myurl=url_domoticz+u'setused&idx='+(PAC_HeatPump[u'idx_switch_mode'])+u'&name='+nom_switch+u'&description=&strparam1=&strparam2=&protected=false&switchtype=18&customimage=7&used=true&addjvalue=0&addjvalue2=0&options='+option
     req=requests.get(myurl)
     if debug:
         print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
@@ -1296,7 +1297,7 @@ def ajout_PAC_zone_component (idx,liste,url,x,label):
     PAC_zone_component [u'idx_switch_mode']= domoticz_add_virtual_device(idx,1002,nom)
     # Personnalisation du switch (Modification du nom des levels et de l'icone)
     option = u'TGV2ZWxOYW1lczpPZmZ8TWFudWVsfEF1dG8gKFByb2cpO0xldmVsQWN0aW9uczp8fDtTZWxlY3RvclN0eWxlOjA7TGV2ZWxPZmZIaWRkZW46ZmFsc2U%3D'
-    myurl=u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?type=setused&idx='+(PAC_zone_component[u'idx_switch_mode'])+u'&name='+nom_switch+u'&description=&strparam1=&strparam2=&protected=false&switchtype=18&customimage=7&used=true&addjvalue=0&addjvalue2=0&options='+option
+    myurl=url_domoticz+u'setused&idx='+(PAC_zone_component[u'idx_switch_mode'])+u'&name='+nom_switch+u'&description=&strparam1=&strparam2=&protected=false&switchtype=18&customimage=7&used=true&addjvalue=0&addjvalue2=0&options='+option
     req=requests.get(myurl)
     if debug:
         print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
@@ -1398,7 +1399,7 @@ def gestion_consigne(texte,url_device,nom_device, idx_cons_domoticz, cons_device
                 domoticz_write_device_analog(cons_domoticz,idx_cons_domoticz) # Mise à jour de la consigne Domoticz
                 domoticz_write_log(u'Cozytouch - '+nom_device+u' : consigne '+texte+u' : consigne doit etre 2°C en dessous de la consigne confort ! ')
 
-                print "consigne abaissement eco Domoticz " + str(cons_domoticz_abais_eco)
+                print("consigne abaissement eco Domoticz " + str(cons_domoticz_abais_eco))
             cozytouch_POST(url_device,cde_name,cons_domoticz_abais_eco) # Envoi de la consigne limitée à Cozytouch
             var_save(cons_domoticz, ('save_consigne_'+(nom_device.encode("utf-8"))+idx_cons_domoticz)) # Sauvegarde consigne domoticz
         else :
