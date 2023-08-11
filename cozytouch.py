@@ -40,9 +40,7 @@ version=5.37 # version=majeure.mineure : Si update de version mineure alors le h
 
 debug=1 # 0 : pas de traces debug / 1 : traces requêtes http / 2 : dump data json reçues du serveur cozytouch / 4 : dump data device sauvegardés / 555 : pour lier manuellement les devices déjà existants en cas de suppresion malencontreuse du cozytouch_save mais pas des devices
 
-domoticz_ip=u'192.168.xx.xx'
-domoticz_port=u'8080'
-
+domoticz_server = u'http://'+ ma_config.domoticz_ip + u':' + ma_config.domoticz_port
 
 '''
 Commentaires
@@ -71,7 +69,7 @@ global url_cozytouchlog, url_cozytouch, url_domoticz, url_atlantic, cookies, url
 
 url_cozytouchlog=u'https://ha110-1.overkiz.com/enduser-mobile-web/enduserAPI/'
 url_cozytouch=u'https://ha110-1.overkiz.com/enduser-mobile-web/externalAPI/json/'
-url_domoticz=u'http://'+domoticz_ip+u':'+domoticz_port+u'/json.htm?type='
+url_domoticz=domoticz_server+u'/json.htm?type='
 url_atlantic=u'https://apis.groupe-atlantic.com'
 
 current_path=os.path.dirname(os.path.abspath(__file__)) # repertoire actuel
@@ -844,7 +842,7 @@ def ajout_radiateur(idx,liste,url,x,label):
     radiateur[u'idx_switch_mode']= domoticz_add_virtual_device(idx,1002,nom)
     # Personnalisation du switch(Modification du nom des levels et de l'icone)
     option = u'TGV2ZWxOYW1lczpPZmZ8TWFudWVsfEF1dG8gKHByb2cpO0xldmVsQWN0aW9uczp8fDtTZWxlY3RvclN0eWxlOjA7TGV2ZWxPZmZIaWRkZW46ZmFsc2U%3D&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true'
-    myurl=u'http://'+domoticz_ip+u':'+domoticz_port+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+radiateur[u'idx_switch_mode']+u'&name='+nom_switch+u'+&options='+option
+    myurl=domoticz_server+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+radiateur[u'idx_switch_mode']+u'&name='+nom_switch+u'+&options='+option
     req=requests.get(myurl)
     if debug:
         print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
@@ -854,7 +852,7 @@ def ajout_radiateur(idx,liste,url,x,label):
     radiateur[u'idx_switch_level']= domoticz_add_virtual_device(idx,1002,nom)
     # Personnalisation du switch(Modification du nom des levels et de l'icone)
     option = u'TGV2ZWxOYW1lczpPZmZ8SG9ycyBnZWx8RWNvfENvbmZvcnQgLTJ8Q29uZm9ydCAtMXxDb25mb3J0O0xldmVsQWN0aW9uczp8fHx8fDtTZWxlY3RvclN0eWxlOjE7TGV2ZWxPZmZIaWRkZW46ZmFsc2U%3D&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true'
-    myurl=u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+radiateur[u'idx_switch_level']+u'&name='+nom_switch+u'+&options='+option
+    myurl=domoticz_server+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+radiateur[u'idx_switch_level']+u'&name='+nom_switch+u'+&options='+option
     req=requests.get(myurl)
     if debug:
         print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
@@ -912,7 +910,7 @@ def ajout_module_fil_pilote(idx,liste,url,x,label):
     module_fil_pilote[u'idx_switch']= domoticz_add_virtual_device(idx,1002,nom)
     # Personnalisation du switch(Modification du nom des levels et de l'icone)
     option = u'TGV2ZWxOYW1lczpPZmZ8SG9ycyBnZWx8RWNvfENvbmZvcnQgLTJ8Q29uZm9ydCAtMXxDb25mb3J0O0xldmVsQWN0aW9uczp8fHx8fDtTZWxlY3RvclN0eWxlOjE7TGV2ZWxPZmZIaWRkZW46ZmFsc2U%3D&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true'
-    myurl=u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+module_fil_pilote[u'idx_switch']+u'&name='+nom_switch+u'+&options='+option
+    myurl=domoticz_server+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+module_fil_pilote[u'idx_switch']+u'&name='+nom_switch+u'+&options='+option
     req=requests.get(myurl)
     if debug:
         print(u'  '.join((u'GET-> ',myurl,' : ',str(req.status_code))).encode('utf-8'))
@@ -1125,21 +1123,21 @@ def Add_DHWP_THERM (idx,liste,url,x,label,name):
     DHWP_THERM[u'idx_switch_mode']= domoticz_add_virtual_device(idx,1002,nom)
     # Personnalisation du switch (Modification du nom des levels et de l'icone)
     option = u'TGV2ZWxOYW1lczpPZmZ8TWFudWFsfE1hbnVhbCtlY298QXV0b3xCb29zdDtMZXZlbEFjdGlvbnM6fHx8fDtTZWxlY3RvclN0eWxlOjA7TGV2ZWxPZmZIaWRkZW46ZmFsc2U%3D'
-    send=requests.get(u'http://'+domoticz_ip+u":"+domoticz_port+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(DHWP_THERM[u'idx_switch_mode'])+'&name='+nom_switch+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
+    send=requests.get(domoticz_server+u'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(DHWP_THERM[u'idx_switch_mode'])+'&name='+nom_switch+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
 
     # Switch selecteur boost duration:
     nom_switch = u'Duree boost (jours) '+nom
     DHWP_THERM[u'idx_boost_duration']= domoticz_add_virtual_device(idx,1002,nom_switch)
     # Personnalisation du switch (Modification du nom des levels et de l'icone
     option = u'TGV2ZWxOYW1lczowfDF8MnwzfDR8NXw2fDc7TGV2ZWxBY3Rpb25zOnx8fHx8fHw7U2VsZWN0b3JTdHlsZTowO0xldmVsT2ZmSGlkZGVuOmZhbHNl'
-    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(DHWP_THERM['idx_boost_duration'])+'&name='+nom_switch+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
+    send=requests.get(domoticz_server+'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(DHWP_THERM['idx_boost_duration'])+'&name='+nom_switch+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
 
     # Switch selecteur durée absence :
     nom_switch = u'Duree absence (jours) '+nom
     DHWP_THERM[u'idx_away_duration']= domoticz_add_virtual_device(idx,1002,nom_switch)
     # Personnalisation du switch (Modification du nom des levels et de l'icone
     option = u'TGV2ZWxOYW1lczowfDF8MnwzfDR8NXw2fDc7TGV2ZWxBY3Rpb25zOnx8fHx8fHw7U2VsZWN0b3JTdHlsZTowO0xldmVsT2ZmSGlkZGVuOmZhbHNl'
-    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(DHWP_THERM['idx_away_duration'])+'&name='+nom_switch+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
+    send=requests.get(domoticz_server+'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(DHWP_THERM['idx_away_duration'])+'&name='+nom_switch+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
 
     ######
     # Widgets added only for SubClass  "io:AtlanticDomesticHotWaterProductionV2_MURAL_IOComponent" or "io:AtlanticDomesticHotWaterProductionV2_CETHI_V4_IOComponent"
@@ -1162,7 +1160,7 @@ def Add_DHWP_THERM (idx,liste,url,x,label,name):
         widget_name = u'Estimated volume at 40 deg '+nom
         DHWP_THERM[u'idx_water_estimation']= domoticz_add_virtual_device(idx,113,widget_name)
         # Personnalisation du compteur
-        send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?addjvalue=0&addjvalue2=0&customimage=2&description=&idx='+(DHWP_THERM['idx_water_estimation'])+'&name='+widget_name+'&switchtype=2&addjvalue=0&addjvalue2=0&used=true&options=')
+        send=requests.get(domoticz_server+'/json.htm?addjvalue=0&addjvalue2=0&customimage=2&description=&idx='+(DHWP_THERM['idx_water_estimation'])+'&name='+widget_name+'&switchtype=2&addjvalue=0&addjvalue2=0&used=true&options=')
 
     # Log Domoticz :
     domoticz_write_log(u"Cozytouch : creation "+nom+u" ,url: "+url)
@@ -1318,14 +1316,14 @@ def ajout_PAC_zone_component (idx,liste,url,x,label):
     PAC_zone_component[u'idx_away_duration']= domoticz_add_virtual_device(idx,1002,nom_switch)
     # Personnalisation du switch (Modification du nom des levels et de l'icone
     option = u'TGV2ZWxOYW1lczowfDF8MnwzfDR8NXw2fDc7TGV2ZWxBY3Rpb25zOnx8fHx8fHw7U2VsZWN0b3JTdHlsZTowO0xldmVsT2ZmSGlkZGVuOmZhbHNl'
-    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(PAC_zone_component['idx_away_duration'])+'&name='+nom_switch+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
+    send=requests.get(domoticz_server+'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(PAC_zone_component['idx_away_duration'])+'&name='+nom_switch+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
 
     # Switch selecteur durée dérogation :
     nom_switch = u'Duree derog. (H) '+nom
     PAC_zone_component[u'idx_derog_duration']= domoticz_add_virtual_device(idx,1002,nom_switch)
     # Personnalisation du switch (Modification du nom des levels et de l'icone
     option = u'TGV2ZWxOYW1lczowfDF8MnwzfDR8NXw2fDd8ODtMZXZlbEFjdGlvbnM6fHx8fHx8fHw7U2VsZWN0b3JTdHlsZTowO0xldmVsT2ZmSGlkZGVuOmZhbHNl'
-    send=requests.get('http://'+domoticz_ip+":"+domoticz_port+'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(PAC_zone_component['idx_derog_duration'])+'&name='+nom_switch+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
+    send=requests.get(domoticz_server+'/json.htm?addjvalue=0&addjvalue2=0&customimage=15&description=&idx='+(PAC_zone_component['idx_derog_duration'])+'&name='+nom_switch+'&options='+option+'&protected=false&strparam1=&strparam2=&switchtype=18&type=setused&used=true')
 
     # Log Domoticz :
     domoticz_write_log(u"Cozytouch : creation "+nom+u" ,url: "+url)
@@ -1948,7 +1946,7 @@ def maj_device(data,name,p,x):
 Déroulement du script
 **********************************************************
 '''
-myurl='http://'+domoticz_ip+':'+domoticz_port+'/json.htm?type=command&param=getversion'
+myurl=domoticz_server+'/json.htm?type=command&param=getversion'
 req=requests.get(myurl) # renvoie la version domoticz
 if debug:
     print(('  '.join(('GET-> ',myurl,' : ',str(req.status_code)))))
