@@ -675,7 +675,7 @@ def decouverte_devices():
     data = cozytouch_GET('setup')
 
     if debug>=2:
-	    f1=open('./dump_cozytouch.txt', 'w+')
+	    f1=open('dump_cozytouch.json', 'w+')
 	    f1.write((json.dumps(data, indent=4, separators=(',', ': '))))
 	    f1.close()
 
@@ -775,7 +775,7 @@ def decouverte_devices():
         # Fin de la boucle :
         # Sauvegarde des devices ajoutés
         if debug>=4:
-            f1=open('./cozytouch_domoticz_devices_idx.txt', 'w+')
+            f1=open('cozytouch_domoticz_devices_idx.json', 'w+')
             f1.write((json.dumps(liste, indent=4, separators=(',', ': '))))
             f1.close()
         
